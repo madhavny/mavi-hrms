@@ -1,0 +1,375 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== SUPER ADMIN (Platform Level) ====================
+
+model SuperAdmin {
+  id          Int      @id @default(autoincrement())
+  email       String   @unique @db.VarChar(100)
+  password    String   @db.VarChar(255)
+  name        String   @db.VarChar(100)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("super_admins")
+}
+
+// ==================== TENANT (Company) ====================
+
+model Tenant {
+  id              Int      @id @default(autoincrement())
+  name            String   @db.VarChar(150)
+  slug            String   @unique @db.VarChar(50) // unique identifier for URL/subdomain
+  logo            String?  @db.VarChar(500)
+  email           String   @db.VarChar(100)
+  phone           String?  @db.VarChar(20)
+  address         String?  @db.Text
+  city            String?  @db.VarChar(100)
+  state           String?  @db.VarChar(100)
+  country         String   @default("India") @db.VarChar(100)
+  pincode         String?  @db.VarChar(10)
+
+  // Subscription & Status
+  status          TenantStatus @default(ACTIVE)
+  subscriptionPlan String?  @db.VarChar(50)
+  subscriptionStart DateTime?
+  subscriptionEnd   DateTime?
+
+  // Enabled Modules (JSON array of module names)
+  enabledModules  String[] @default([])
+
+  // Audit
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       Int?     // SuperAdmin ID
+
+  // Relations
+  users           User[]
+  roles           Role[]
+  departments     Department[]
+  designations    Designation[]
+  locations       Location[]
+
+  @@index([slug])
+  @@index([status])
+  @@map("tenants")
+}
+
+enum TenantStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  TRIAL
+}
+
+// ==================== ROLE & PERMISSIONS ====================
+
+model Role {
+  id          Int      @id @default(autoincrement())
+  tenantId    Int
+  name        String   @db.VarChar(50)
+  code        String   @db.VarChar(30) // ADMIN, HR, MANAGER, EMPLOYEE
+  description String?  @db.VarChar(255)
+  isSystem    Boolean  @default(false) // System roles can't be deleted
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  permissions RolePermission[]
+  users       User[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@map("roles")
+}
+
+model Permission {
+  id          Int      @id @default(autoincrement())
+  module      String   @db.VarChar(50)  // e.g., "attendance", "leave", "payroll"
+  action      String   @db.VarChar(30)  // e.g., "view", "create", "edit", "delete", "approve"
+  description String?  @db.VarChar(255)
+  createdAt   DateTime @default(now())
+
+  // Relations
+  rolePermissions RolePermission[]
+
+  @@unique([module, action])
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           Int      @id @default(autoincrement())
+  roleId       Int
+  permissionId Int
+  createdAt    DateTime @default(now())
+
+  // Relations
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+// ==================== USER (Tenant Users) ====================
+
+model User {
+  id              Int      @id @default(autoincrement())
+  tenantId        Int
+  employeeCode    String?  @db.VarChar(20)
+  email           String   @db.VarChar(100)
+  password        String   @db.VarChar(255)
+  plainPassword   String?  @db.VarChar(255) // For super admin viewing only - security risk!
+
+  // Personal Info
+  firstName       String   @db.VarChar(50)
+  lastName        String?  @db.VarChar(50)
+  phone           String?  @db.VarChar(20)
+  avatar          String?  @db.VarChar(500)
+  dateOfBirth     DateTime?
+  gender          String?  @db.VarChar(10)
+
+  // Employment Info
+  roleId          Int
+  departmentId    Int?
+  designationId   Int?
+  locationId      Int?
+  reportingTo     Int?     // Manager's User ID
+  dateOfJoining   DateTime?
+  employmentType  String?  @db.VarChar(30) // FULL_TIME, PART_TIME, CONTRACT
+
+  // Status
+  isActive        Boolean  @default(true)
+  isEmailVerified Boolean  @default(false)
+  lastLogin       DateTime?
+
+  // Audit
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       Int?
+
+  // Relations
+  tenant          Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  role            Role        @relation(fields: [roleId], references: [id])
+  department      Department? @relation(fields: [departmentId], references: [id])
+  designation     Designation? @relation(fields: [designationId], references: [id])
+  location        Location?   @relation(fields: [locationId], references: [id])
+  manager         User?       @relation("ManagerRelation", fields: [reportingTo], references: [id])
+  subordinates    User[]      @relation("ManagerRelation")
+
+  // Attendance & Leave Relations
+  attendance      Attendance[] @relation("UserAttendance")
+  approvedAttendance Attendance[] @relation("AttendanceApprover")
+  leaveBalances   LeaveBalance[] @relation("UserLeaveBalance")
+  leaveRequests   LeaveRequest[] @relation("UserLeaveRequest")
+  leaveRequestsAppliedTo LeaveRequest[] @relation("LeaveAppliedTo")
+  leaveRequestsReviewed LeaveRequest[] @relation("LeaveReviewer")
+
+  @@unique([tenantId, email])
+  @@unique([tenantId, employeeCode])
+  @@index([tenantId])
+  @@index([tenantId, roleId])
+  @@index([tenantId, departmentId])
+  @@map("users")
+}
+
+// ==================== ORGANIZATION STRUCTURE ====================
+
+model Department {
+  id          Int      @id @default(autoincrement())
+  tenantId    Int
+  name        String   @db.VarChar(100)
+  code        String   @db.VarChar(20)
+  parentId    Int?     // For hierarchy
+  headId      Int?     // Department head User ID
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  parent      Department? @relation("DeptHierarchy", fields: [parentId], references: [id])
+  children    Department[] @relation("DeptHierarchy")
+  users       User[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@map("departments")
+}
+
+model Designation {
+  id          Int      @id @default(autoincrement())
+  tenantId    Int
+  name        String   @db.VarChar(100)
+  code        String   @db.VarChar(20)
+  level       Int      @default(1) // For hierarchy/grade
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  users       User[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@map("designations")
+}
+
+model Location {
+  id          Int      @id @default(autoincrement())
+  tenantId    Int
+  name        String   @db.VarChar(100)
+  code        String   @db.VarChar(20)
+  address     String?  @db.Text
+  city        String?  @db.VarChar(100)
+  state       String?  @db.VarChar(100)
+  country     String   @default("India") @db.VarChar(100)
+  pincode     String?  @db.VarChar(10)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  users       User[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@map("locations")
+}
+
+// ==================== ATTENDANCE ====================
+
+model Attendance {
+  id              Int      @id @default(autoincrement())
+  tenantId        Int
+  userId          Int
+  date            DateTime @db.Date
+  clockIn         DateTime?
+  clockOut        DateTime?
+  totalHours      Float?   @default(0) // Calculated working hours
+  status          AttendanceStatus @default(PRESENT)
+  remarks         String?  @db.Text
+  approvedBy      Int?     // Manager/HR ID who approved
+  approvedAt      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user            User     @relation("UserAttendance", fields: [userId], references: [id], onDelete: Cascade)
+  approver        User?    @relation("AttendanceApprover", fields: [approvedBy], references: [id])
+
+  @@unique([tenantId, userId, date])
+  @@index([tenantId])
+  @@index([userId])
+  @@index([date])
+  @@map("attendance")
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  HALF_DAY
+  LATE
+  ON_LEAVE
+  HOLIDAY
+  WEEKEND
+}
+
+// ==================== LEAVE MANAGEMENT ====================
+
+model LeaveType {
+  id              Int      @id @default(autoincrement())
+  tenantId        Int
+  name            String   @db.VarChar(50) // Casual Leave, Sick Leave, Earned Leave, etc.
+  code            String   @db.VarChar(20)
+  isPaid          Boolean  @default(true)
+  maxDaysPerYear  Int?     // Max days allowed per year
+  carryForward    Boolean  @default(false) // Can unused days carry forward?
+  requiresDocument Boolean @default(false) // Medical certificate required?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  leaveBalances   LeaveBalance[]
+  leaveRequests   LeaveRequest[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@map("leave_types")
+}
+
+model LeaveBalance {
+  id              Int      @id @default(autoincrement())
+  tenantId        Int
+  userId          Int
+  leaveTypeId     Int
+  year            Int      // Financial year
+  totalDays       Float    @default(0) // Total allocated
+  usedDays        Float    @default(0) // Used days
+  pendingDays     Float    @default(0) // Pending approval
+  availableDays   Float    @default(0) // Available = total - used - pending
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user            User     @relation("UserLeaveBalance", fields: [userId], references: [id], onDelete: Cascade)
+  leaveType       LeaveType @relation(fields: [leaveTypeId], references: [id])
+
+  @@unique([tenantId, userId, leaveTypeId, year])
+  @@index([tenantId])
+  @@index([userId])
+  @@map("leave_balances")
+}
+
+model LeaveRequest {
+  id              Int      @id @default(autoincrement())
+  tenantId        Int
+  userId          Int
+  leaveTypeId     Int
+  fromDate        DateTime @db.Date
+  toDate          DateTime @db.Date
+  totalDays       Float    // Can be 0.5 for half day
+  reason          String   @db.Text
+  documentUrl     String?  @db.VarChar(500) // Medical certificate, etc.
+  status          LeaveStatus @default(PENDING)
+
+  // Approval workflow
+  appliedTo       Int?     // Manager/HR ID to whom request is sent
+  reviewedBy      Int?     // Who approved/rejected
+  reviewedAt      DateTime?
+  reviewComments  String?  @db.Text
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user            User     @relation("UserLeaveRequest", fields: [userId], references: [id], onDelete: Cascade)
+  leaveType       LeaveType @relation(fields: [leaveTypeId], references: [id])
+  appliedToUser   User?    @relation("LeaveAppliedTo", fields: [appliedTo], references: [id])
+  reviewer        User?    @relation("LeaveReviewer", fields: [reviewedBy], references: [id])
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([status])
+  @@index([fromDate])
+  @@map("leave_requests")
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
