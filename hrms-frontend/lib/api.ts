@@ -55,7 +55,16 @@ export const superAdminApi = {
   getTenant: (id: number) => request<Tenant>(`/super-admin/tenants/${id}`),
 
   createTenant: (data: CreateTenantInput) =>
-    request<{ tenant: Tenant; adminUser: { id: number; email: string } }>(
+    request<{
+      tenant: Tenant;
+      adminUser: { id: number; email: string; firstName: string; lastName: string };
+      credentials: {
+        email: string;
+        password: string;
+        loginUrl: string;
+        warning: string;
+      };
+    }>(
       '/super-admin/tenants',
       { method: 'POST', body: JSON.stringify(data) }
     ),
@@ -118,7 +127,241 @@ export const tenantApi = {
 
   getLocations: () =>
     request<{ id: number; name: string; code: string; city?: string; state?: string }[]>('/tenant/locations'),
+
+  // Password Reset
+  forgotPassword: (email: string, tenant: string) =>
+    request<{ message: string }>('/tenant/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email, tenant }),
+    }),
+
+  verifyResetToken: (token: string, tenant: string) =>
+    request<{ email: string; firstName: string }>('/tenant/verify-reset-token', {
+      method: 'POST',
+      body: JSON.stringify({ token, tenant }),
+    }),
+
+  resetPassword: (token: string, password: string, tenant: string) =>
+    request<{ message: string }>('/tenant/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, password, tenant }),
+    }),
+
+  // Avatar Upload
+  uploadAvatar: async (file: File) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    const response = await fetch(`${API_BASE}/tenant/profile/avatar`, {
+      method: 'POST',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to upload avatar');
+    }
+    return data as { success: boolean; message: string; data: { avatar: string; avatarUrl: string } };
+  },
+
+  deleteAvatar: () =>
+    request<{ message: string }>('/tenant/profile/avatar', { method: 'DELETE' }),
+
+  // Bulk Operations
+  downloadEmployeeTemplate: async () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const response = await fetch(`${API_BASE}/tenant/users/template`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to download template');
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'employee_import_template.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  },
+
+  bulkImportEmployees: async (file: File) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${API_BASE}/tenant/users/bulk-import`, {
+      method: 'POST',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to import employees');
+    }
+    return data as BulkImportResult;
+  },
+
+  exportEmployees: async (params?: { search?: string; roleId?: number; departmentId?: number; isActive?: boolean }) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const query = params ? new URLSearchParams(
+      Object.fromEntries(
+        Object.entries(params).filter(([, v]) => v !== undefined && v !== '')
+      ) as Record<string, string>
+    ).toString() : '';
+
+    const response = await fetch(`${API_BASE}/tenant/users/export${query ? `?${query}` : ''}`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to export employees');
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `employees_export_${Date.now()}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  },
+
+  getEmployeesForAttendance: (params?: { search?: string; departmentId?: number }) => {
+    const query = params ? new URLSearchParams(
+      Object.fromEntries(
+        Object.entries(params).filter(([, v]) => v !== undefined && v !== '')
+      ) as Record<string, string>
+    ).toString() : '';
+    return request<EmployeeForAttendance[]>(`/tenant/attendance/employees${query ? `?${query}` : ''}`);
+  },
+
+  bulkMarkAttendance: (records: BulkAttendanceRecord[]) =>
+    request<BulkAttendanceResult>('/tenant/attendance/bulk-mark', {
+      method: 'POST',
+      body: JSON.stringify({ records }),
+    }),
+
+  // Export to Excel/PDF
+  exportEmployeesExcel: async (params?: ExportParams) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const query = params ? new URLSearchParams(
+      Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== ''))
+    ).toString() : '';
+
+    const response = await fetch(`${API_BASE}/tenant/export/employees/excel${query ? `?${query}` : ''}`, {
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+
+    if (!response.ok) throw new Error('Failed to export employees');
+    const blob = await response.blob();
+    downloadFile(blob, `employees_${Date.now()}.xlsx`);
+  },
+
+  exportEmployeesPDF: async (params?: ExportParams) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const query = params ? new URLSearchParams(
+      Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== ''))
+    ).toString() : '';
+
+    const response = await fetch(`${API_BASE}/tenant/export/employees/pdf${query ? `?${query}` : ''}`, {
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+
+    if (!response.ok) throw new Error('Failed to export employees');
+    const blob = await response.blob();
+    downloadFile(blob, `employees_${Date.now()}.pdf`);
+  },
+
+  exportAttendanceExcel: async (params?: AttendanceExportParams) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const query = params ? new URLSearchParams(
+      Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== ''))
+    ).toString() : '';
+
+    const response = await fetch(`${API_BASE}/tenant/export/attendance/excel${query ? `?${query}` : ''}`, {
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+
+    if (!response.ok) throw new Error('Failed to export attendance');
+    const blob = await response.blob();
+    downloadFile(blob, `attendance_${Date.now()}.xlsx`);
+  },
+
+  exportAttendancePDF: async (params?: AttendanceExportParams) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const query = params ? new URLSearchParams(
+      Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== ''))
+    ).toString() : '';
+
+    const response = await fetch(`${API_BASE}/tenant/export/attendance/pdf${query ? `?${query}` : ''}`, {
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+
+    if (!response.ok) throw new Error('Failed to export attendance');
+    const blob = await response.blob();
+    downloadFile(blob, `attendance_${Date.now()}.pdf`);
+  },
+
+  exportLeaveExcel: async (params?: LeaveExportParams) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const query = params ? new URLSearchParams(
+      Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== ''))
+    ).toString() : '';
+
+    const response = await fetch(`${API_BASE}/tenant/export/leave/excel${query ? `?${query}` : ''}`, {
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+
+    if (!response.ok) throw new Error('Failed to export leave report');
+    const blob = await response.blob();
+    downloadFile(blob, `leave_report_${Date.now()}.xlsx`);
+  },
+
+  exportLeavePDF: async (params?: LeaveExportParams) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const query = params ? new URLSearchParams(
+      Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== ''))
+    ).toString() : '';
+
+    const response = await fetch(`${API_BASE}/tenant/export/leave/pdf${query ? `?${query}` : ''}`, {
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+
+    if (!response.ok) throw new Error('Failed to export leave report');
+    const blob = await response.blob();
+    downloadFile(blob, `leave_report_${Date.now()}.pdf`);
+  },
 };
+
+// Helper function for file downloads
+function downloadFile(blob: Blob, filename: string) {
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
+}
 
 // Attendance APIs
 export const attendanceApi = {
@@ -235,10 +478,10 @@ export interface Tenant {
   adminUsers?: Array<{
     id: number;
     email: string;
-    plainPassword?: string;
     firstName: string;
     lastName?: string;
     employeeCode?: string;
+    createdAt?: string;
   }>;
 }
 
@@ -265,6 +508,7 @@ export interface TenantUser {
   email: string;
   employeeCode?: string;
   phone?: string;
+  avatar?: string;
   isActive: boolean;
   role: { id: number; name: string; code: string };
   department?: { id: number; name: string };
@@ -441,4 +685,151 @@ export interface ApplyLeaveInput {
   reason: string;
   documentUrl?: string;
   appliedTo?: number;
+}
+
+// Audit Types
+export interface AuditLog {
+  id: number;
+  tenantId?: number;
+  userId?: number;
+  userEmail?: string;
+  userType: string;
+  action: string;
+  entity: string;
+  entityId?: number;
+  entityName?: string;
+  oldValue?: Record<string, unknown>;
+  newValue?: Record<string, unknown>;
+  changes?: Record<string, { from: unknown; to: unknown }>;
+  ipAddress?: string;
+  userAgent?: string;
+  createdAt: string;
+}
+
+export interface AuditLogListResponse {
+  logs: AuditLog[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface AuditStats {
+  byAction: { action: string; count: number }[];
+  byEntity: { entity: string; count: number }[];
+  recentActivity: { action: string; count: number }[];
+}
+
+// Audit APIs
+export const auditApi = {
+  // Get audit logs with filters
+  getAuditLogs: (params?: {
+    page?: number;
+    limit?: number;
+    entity?: string;
+    entityId?: number;
+    action?: string;
+    userId?: number;
+    startDate?: string;
+    endDate?: string;
+    search?: string;
+  }) => {
+    const query = new URLSearchParams(
+      Object.fromEntries(
+        Object.entries(params || {}).filter(([, v]) => v !== undefined && v !== '')
+      ) as Record<string, string>
+    ).toString();
+    return request<AuditLogListResponse>(`/audit${query ? `?${query}` : ''}`);
+  },
+
+  // Get single audit log detail
+  getAuditLogDetail: (id: number) => request<AuditLog>(`/audit/${id}`),
+
+  // Get audit logs for a specific entity
+  getEntityAuditLogs: (entity: string, entityId: number, params?: { page?: number; limit?: number }) => {
+    const query = new URLSearchParams(params as Record<string, string>).toString();
+    return request<AuditLogListResponse>(`/audit/entity/${entity}/${entityId}${query ? `?${query}` : ''}`);
+  },
+
+  // Get available entity types
+  getEntityTypes: () => request<string[]>('/audit/entity-types'),
+
+  // Get audit statistics
+  getAuditStats: (params?: { startDate?: string; endDate?: string }) => {
+    const query = new URLSearchParams(params as Record<string, string>).toString();
+    return request<AuditStats>(`/audit/stats${query ? `?${query}` : ''}`);
+  },
+
+  // Get user activity
+  getUserActivity: (userId: number, params?: { page?: number; limit?: number }) => {
+    const query = new URLSearchParams(params as Record<string, string>).toString();
+    return request<AuditLogListResponse>(`/audit/user/${userId}${query ? `?${query}` : ''}`);
+  },
+};
+
+// Bulk Operations Types
+export interface BulkImportResult {
+  success: boolean;
+  message: string;
+  data: {
+    total: number;
+    successful: number;
+    failed: number;
+    errors: string[];
+    created: { id: number; email: string; name: string }[];
+  };
+}
+
+export interface EmployeeForAttendance {
+  id: number;
+  name: string;
+  employeeCode?: string;
+  department?: string;
+}
+
+export interface BulkAttendanceRecord {
+  employee_code: string;
+  date: string;
+  status: string;
+  clock_in?: string;
+  clock_out?: string;
+  remarks?: string;
+}
+
+export interface BulkAttendanceResult {
+  success: boolean;
+  message: string;
+  data: {
+    total: number;
+    successful: number;
+    failed: number;
+    errors: string[];
+    created: { id: number; userId: number; date: string }[];
+    updated: { id: number; userId: number; date: string }[];
+  };
+}
+
+// Export Parameter Types
+export interface ExportParams {
+  search?: string;
+  roleId?: string;
+  departmentId?: string;
+  isActive?: string;
+}
+
+export interface AttendanceExportParams {
+  startDate?: string;
+  endDate?: string;
+  userId?: string;
+  departmentId?: string;
+  status?: string;
+}
+
+export interface LeaveExportParams {
+  startDate?: string;
+  endDate?: string;
+  userId?: string;
+  departmentId?: string;
+  status?: string;
+  leaveTypeId?: string;
 }

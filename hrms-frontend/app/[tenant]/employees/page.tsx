@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { tenantApi, TenantUser } from '@/lib/api';
+import { tenantApi, TenantUser, BulkImportResult } from '@/lib/api';
 import {
   Table,
   TableBody,
@@ -19,6 +19,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -29,12 +30,46 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, Plus, Edit, Trash2, Eye } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Search, Plus, Edit, Trash2, Eye, Upload, Download, FileDown, X, AlertCircle, CheckCircle2, FileSpreadsheet, FileText, ChevronDown } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { Spinner } from '@/components/ui/spinner';
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9000';
+
+const getAvatarUrl = (avatar?: string) => {
+  if (!avatar) return null;
+  if (avatar.startsWith('http')) return avatar;
+  return `${API_BASE}/${avatar}`;
+};
+
+const getInitials = (firstName?: string, lastName?: string, email?: string) => {
+  const first = firstName?.[0] || '';
+  const last = lastName?.[0] || '';
+  return (first + last).toUpperCase() || email?.[0]?.toUpperCase() || '?';
+};
 
 export default function EmployeesPage() {
   const router = useRouter();
   const params = useParams();
+  const { toast } = useToast();
   const tenantSlug = params.tenant as string;
 
   const [employees, setEmployees] = useState<TenantUser[]>([]);
@@ -47,8 +82,17 @@ export default function EmployeesPage() {
   const [selectedEmployee, setSelectedEmployee] = useState<TenantUser | null>(null);
   const [roles, setRoles] = useState<{ id: number; name: string; code: string }[]>([]);
   const [departments, setDepartments] = useState<{ id: number; name: string; code: string }[]>([]);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Bulk operations state
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [importResult, setImportResult] = useState<BulkImportResult | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -75,7 +119,11 @@ export default function EmployeesPage() {
         setTotal(res.data.total);
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to load employees');
+      toast({
+        title: 'Error',
+        description: err.message || 'Failed to load employees',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
@@ -96,8 +144,7 @@ export default function EmployeesPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
+    setSaving(true);
 
     try {
       await tenantApi.createUser({
@@ -105,12 +152,21 @@ export default function EmployeesPage() {
         roleId: parseInt(formData.roleId),
         departmentId: formData.departmentId ? parseInt(formData.departmentId) : undefined,
       });
-      setSuccess('Employee created successfully');
+      toast({
+        title: 'Success',
+        description: 'Employee created successfully',
+      });
       setShowCreateModal(false);
       resetForm();
       loadEmployees();
     } catch (err: any) {
-      setError(err.message || 'Failed to create employee');
+      toast({
+        title: 'Error',
+        description: err.message || 'Failed to create employee',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -118,8 +174,7 @@ export default function EmployeesPage() {
     e.preventDefault();
     if (!selectedEmployee) return;
 
-    setError('');
-    setSuccess('');
+    setSaving(true);
 
     try {
       const updateData: any = {
@@ -140,24 +195,50 @@ export default function EmployeesPage() {
       }
 
       await tenantApi.updateUser(selectedEmployee.id, updateData);
-      setSuccess('Employee updated successfully');
+      toast({
+        title: 'Success',
+        description: 'Employee updated successfully',
+      });
       setShowEditModal(false);
       resetForm();
       loadEmployees();
     } catch (err: any) {
-      setError(err.message || 'Failed to update employee');
+      toast({
+        title: 'Error',
+        description: err.message || 'Failed to update employee',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to deactivate this employee?')) return;
+  const openDeleteDialog = (id: number) => {
+    setEmployeeToDelete(id);
+    setShowDeleteDialog(true);
+  };
+
+  const handleDelete = async () => {
+    if (!employeeToDelete) return;
+    setDeleting(true);
 
     try {
-      await tenantApi.deleteUser(id);
-      setSuccess('Employee deactivated successfully');
+      await tenantApi.deleteUser(employeeToDelete);
+      toast({
+        title: 'Success',
+        description: 'Employee deactivated successfully',
+      });
       loadEmployees();
     } catch (err: any) {
-      setError(err.message || 'Failed to delete employee');
+      toast({
+        title: 'Error',
+        description: err.message || 'Failed to delete employee',
+        variant: 'destructive',
+      });
+    } finally {
+      setDeleting(false);
+      setShowDeleteDialog(false);
+      setEmployeeToDelete(null);
     }
   };
 
@@ -190,21 +271,131 @@ export default function EmployeesPage() {
     setSelectedEmployee(null);
   };
 
+  // Bulk operations handlers
+  const handleDownloadTemplate = async () => {
+    try {
+      await tenantApi.downloadEmployeeTemplate();
+      toast({
+        title: 'Template Downloaded',
+        description: 'The CSV template has been downloaded successfully.',
+      });
+    } catch (err: unknown) {
+      toast({
+        title: 'Error',
+        description: err instanceof Error ? err.message : 'Failed to download template',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleExportCSV = async () => {
+    setExporting(true);
+    try {
+      await tenantApi.exportEmployees({ search });
+      toast({
+        title: 'Export Successful',
+        description: 'Employees have been exported to CSV.',
+      });
+    } catch (err: unknown) {
+      toast({
+        title: 'Error',
+        description: err instanceof Error ? err.message : 'Failed to export employees',
+        variant: 'destructive',
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    setExporting(true);
+    try {
+      await tenantApi.exportEmployeesExcel({ search });
+      toast({
+        title: 'Export Successful',
+        description: 'Employees have been exported to Excel.',
+      });
+    } catch (err: unknown) {
+      toast({
+        title: 'Error',
+        description: err instanceof Error ? err.message : 'Failed to export employees',
+        variant: 'destructive',
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    setExporting(true);
+    try {
+      await tenantApi.exportEmployeesPDF({ search });
+      toast({
+        title: 'Export Successful',
+        description: 'Employees have been exported to PDF.',
+      });
+    } catch (err: unknown) {
+      toast({
+        title: 'Error',
+        description: err instanceof Error ? err.message : 'Failed to export employees',
+        variant: 'destructive',
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.name.endsWith('.csv')) {
+        toast({
+          title: 'Invalid File',
+          description: 'Please select a CSV file.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      setSelectedFile(file);
+      setImportResult(null);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!selectedFile) return;
+
+    setImporting(true);
+    try {
+      const result = await tenantApi.bulkImportEmployees(selectedFile);
+      setImportResult(result);
+      if (result.data.successful > 0) {
+        loadEmployees();
+      }
+      toast({
+        title: result.data.failed === 0 ? 'Import Successful' : 'Import Completed with Errors',
+        description: result.message,
+        variant: result.data.failed === 0 ? 'default' : 'destructive',
+      });
+    } catch (err: unknown) {
+      toast({
+        title: 'Import Failed',
+        description: err instanceof Error ? err.message : 'Failed to import employees',
+        variant: 'destructive',
+      });
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const closeImportModal = () => {
+    setShowImportModal(false);
+    setSelectedFile(null);
+    setImportResult(null);
+  };
+
   return (
     <DashboardLayout title="Employees">
       <div className="space-y-6">
-        {/* Success/Error Messages */}
-        {success && (
-          <Alert className="bg-green-50 border-green-200">
-            <AlertDescription className="text-green-800">{success}</AlertDescription>
-          </Alert>
-        )}
-        {error && (
-          <Alert className="bg-red-50 border-red-200">
-            <AlertDescription className="text-red-800">{error}</AlertDescription>
-          </Alert>
-        )}
-
         {/* Header Actions */}
         <div className="flex justify-between items-center">
           <div className="relative w-96">
@@ -219,15 +410,55 @@ export default function EmployeesPage() {
               className="pl-10"
             />
           </div>
-          <Button onClick={() => setShowCreateModal(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Employee
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleDownloadTemplate}>
+              <FileDown className="h-4 w-4 mr-2" />
+              Template
+            </Button>
+            <Button variant="outline" onClick={() => setShowImportModal(true)}>
+              <Upload className="h-4 w-4 mr-2" />
+              Import
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" disabled={exporting}>
+                  {exporting ? (
+                    <Spinner size="sm" className="mr-2" />
+                  ) : (
+                    <Download className="h-4 w-4 mr-2" />
+                  )}
+                  {exporting ? 'Exporting...' : 'Export'}
+                  <ChevronDown className="h-4 w-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Export Format</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleExportCSV}>
+                  <FileDown className="h-4 w-4 mr-2" />
+                  Export as CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportExcel}>
+                  <FileSpreadsheet className="h-4 w-4 mr-2" />
+                  Export as Excel
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportPDF}>
+                  <FileText className="h-4 w-4 mr-2" />
+                  Export as PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button onClick={() => setShowCreateModal(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Employee
+            </Button>
+          </div>
         </div>
 
         {/* Employee Table */}
-        <div className="bg-white rounded-lg shadow">
-          <Table>
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Employee Code</TableHead>
@@ -257,7 +488,22 @@ export default function EmployeesPage() {
                   <TableRow key={employee.id}>
                     <TableCell className="font-medium">{employee.employeeCode || '-'}</TableCell>
                     <TableCell>
-                      {employee.firstName} {employee.lastName}
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+                          {getAvatarUrl(employee.avatar) ? (
+                            <img
+                              src={getAvatarUrl(employee.avatar)!}
+                              alt={`${employee.firstName} ${employee.lastName}`}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-xs font-medium text-gray-500">
+                              {getInitials(employee.firstName, employee.lastName, employee.email)}
+                            </span>
+                          )}
+                        </div>
+                        <span>{employee.firstName} {employee.lastName}</span>
+                      </div>
                     </TableCell>
                     <TableCell>{employee.email}</TableCell>
                     <TableCell>
@@ -294,7 +540,7 @@ export default function EmployeesPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDelete(employee.id)}
+                          onClick={() => openDeleteDialog(employee.id)}
                           className="text-red-600 hover:text-red-700"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -306,6 +552,7 @@ export default function EmployeesPage() {
               )}
             </TableBody>
           </Table>
+          </div>
 
           {/* Pagination */}
           {total > 20 && (
@@ -340,6 +587,9 @@ export default function EmployeesPage() {
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Add New Employee</DialogTitle>
+              <DialogDescription>
+                Fill in the details below to create a new employee account. Required fields are marked with *.
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleCreate}>
               <div className="grid grid-cols-2 gap-4 py-4">
@@ -375,11 +625,13 @@ export default function EmployeesPage() {
                   <Input
                     id="password"
                     type="password"
+                    autoComplete="new-password"
                     required
                     minLength={8}
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   />
+                  <p className="text-xs text-gray-500">Minimum 8 characters</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="employeeCode">Employee Code</Label>
@@ -436,10 +688,13 @@ export default function EmployeesPage() {
                 </div>
               </div>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setShowCreateModal(false)}>
+                <Button type="button" variant="outline" onClick={() => setShowCreateModal(false)} disabled={saving}>
                   Cancel
                 </Button>
-                <Button type="submit">Create Employee</Button>
+                <Button type="submit" disabled={saving}>
+                  {saving && <Spinner size="sm" className="mr-2" />}
+                  {saving ? 'Creating...' : 'Create Employee'}
+                </Button>
               </DialogFooter>
             </form>
           </DialogContent>
@@ -450,6 +705,9 @@ export default function EmployeesPage() {
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Edit Employee</DialogTitle>
+              <DialogDescription>
+                Update the employee information below. Leave the password field empty to keep the current password.
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleUpdate}>
               <div className="grid grid-cols-2 gap-4 py-4">
@@ -481,13 +739,16 @@ export default function EmployeesPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-password">Password (leave blank to keep current)</Label>
+                  <Label htmlFor="edit-password">New Password</Label>
                   <Input
                     id="edit-password"
                     type="password"
+                    autoComplete="new-password"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder="Leave blank to keep current password"
                   />
+                  <p className="text-xs text-gray-500">Only fill this if you want to change the password (min. 8 characters)</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-employeeCode">Employee Code</Label>
@@ -544,12 +805,167 @@ export default function EmployeesPage() {
                 </div>
               </div>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setShowEditModal(false)}>
+                <Button type="button" variant="outline" onClick={() => setShowEditModal(false)} disabled={saving}>
                   Cancel
                 </Button>
-                <Button type="submit">Update Employee</Button>
+                <Button type="submit" disabled={saving}>
+                  {saving && <Spinner size="sm" className="mr-2" />}
+                  {saving ? 'Updating...' : 'Update Employee'}
+                </Button>
               </DialogFooter>
             </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Deactivate Employee</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to deactivate this employee? They will no longer be able to access the system.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDelete}
+                disabled={deleting}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {deleting && <Spinner size="sm" className="mr-2" />}
+                {deleting ? 'Deactivating...' : 'Deactivate'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Import Employees Modal */}
+        <Dialog open={showImportModal} onOpenChange={closeImportModal}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Import Employees</DialogTitle>
+              <DialogDescription>
+                Upload a CSV file to import multiple employees at once. Download the template first to see the required format.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              {/* Download Template Link */}
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div>
+                  <p className="font-medium">Need the CSV template?</p>
+                  <p className="text-sm text-gray-500">Download a template with the correct column headers.</p>
+                </div>
+                <Button variant="outline" size="sm" onClick={handleDownloadTemplate}>
+                  <FileDown className="h-4 w-4 mr-2" />
+                  Download Template
+                </Button>
+              </div>
+
+              {/* File Upload */}
+              <div className="space-y-2">
+                <Label>Select CSV File</Label>
+                <div className="flex items-center gap-4">
+                  <input
+                    type="file"
+                    accept=".csv"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    id="csv-upload"
+                  />
+                  <label
+                    htmlFor="csv-upload"
+                    className="flex items-center gap-2 px-4 py-2 border border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                  >
+                    <Upload className="h-5 w-5 text-gray-400" />
+                    <span className="text-sm text-gray-600">
+                      {selectedFile ? selectedFile.name : 'Choose a CSV file...'}
+                    </span>
+                  </label>
+                  {selectedFile && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedFile(null);
+                        setImportResult(null);
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Import Result */}
+              {importResult && (
+                <div className="space-y-3">
+                  {/* Summary */}
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="p-3 bg-gray-50 rounded-lg text-center">
+                      <p className="text-2xl font-bold">{importResult.data.total}</p>
+                      <p className="text-sm text-gray-500">Total Rows</p>
+                    </div>
+                    <div className="p-3 bg-green-50 rounded-lg text-center">
+                      <p className="text-2xl font-bold text-green-600">{importResult.data.successful}</p>
+                      <p className="text-sm text-green-600">Successful</p>
+                    </div>
+                    <div className="p-3 bg-red-50 rounded-lg text-center">
+                      <p className="text-2xl font-bold text-red-600">{importResult.data.failed}</p>
+                      <p className="text-sm text-red-600">Failed</p>
+                    </div>
+                  </div>
+
+                  {/* Created Employees */}
+                  {importResult.data.created.length > 0 && (
+                    <div className="p-3 bg-green-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        <span className="font-medium text-green-800">Created Employees</span>
+                      </div>
+                      <div className="max-h-32 overflow-y-auto">
+                        <ul className="text-sm text-green-700 space-y-1">
+                          {importResult.data.created.slice(0, 10).map((emp, idx) => (
+                            <li key={idx}>{emp.name} ({emp.email})</li>
+                          ))}
+                          {importResult.data.created.length > 10 && (
+                            <li className="text-green-600">...and {importResult.data.created.length - 10} more</li>
+                          )}
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Errors */}
+                  {importResult.data.errors.length > 0 && (
+                    <div className="p-3 bg-red-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <AlertCircle className="h-4 w-4 text-red-600" />
+                        <span className="font-medium text-red-800">Errors</span>
+                      </div>
+                      <div className="max-h-40 overflow-y-auto">
+                        <ul className="text-sm text-red-700 space-y-1">
+                          {importResult.data.errors.map((error, idx) => (
+                            <li key={idx}>{error}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={closeImportModal} disabled={importing}>
+                {importResult ? 'Close' : 'Cancel'}
+              </Button>
+              {!importResult && (
+                <Button onClick={handleImport} disabled={!selectedFile || importing}>
+                  {importing && <Spinner size="sm" className="mr-2" />}
+                  {importing ? 'Importing...' : 'Import Employees'}
+                </Button>
+              )}
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>

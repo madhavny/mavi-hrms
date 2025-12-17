@@ -1,10 +1,14 @@
 import express from 'express';
+import path from 'path';
 import logger from '@shared/utilities/logger.js';
 import web from '@web/app.js';
 import { setupGracefulShutdown } from '@shared/config/database.js';
 
-const PORT =process.env.APP_PORT|| 9000;
+const PORT = process.env.APP_PORT || 9000;
 const app = express();
+
+// Serve uploaded files statically
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Mount all modular apps
 app.use('/api/v1', web);

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -57,7 +58,8 @@ export default function TenantLoginPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@company.com"
+              placeholder="Enter your email"
+              autoComplete="email"
               required
             />
           </div>
@@ -69,7 +71,8 @@ export default function TenantLoginPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter password"
+              placeholder="Enter your password"
+              autoComplete="current-password"
               required
             />
           </div>
@@ -79,9 +82,14 @@ export default function TenantLoginPage() {
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-gray-500">
-          Forgot password? Contact your administrator.
-        </p>
+        <div className="mt-6 text-center">
+          <Link
+            href={`/${tenantSlug}/forgot-password`}
+            className="text-sm text-blue-600 hover:text-blue-500"
+          >
+            Forgot your password?
+          </Link>
+        </div>
       </div>
     </div>
   );

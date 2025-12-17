@@ -20,6 +20,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -32,16 +33,30 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FileText, Plus, Calendar, X } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { Spinner } from '@/components/ui/spinner';
 
 export default function LeavePage() {
+  const { toast } = useToast();
   const [balances, setBalances] = useState<LeaveBalance[]>([]);
   const [requests, setRequests] = useState<LeaveRequest[]>([]);
   const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
   const [loading, setLoading] = useState(true);
   const [showApplyModal, setShowApplyModal] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [requestToCancel, setRequestToCancel] = useState<number | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     leaveTypeId: '',
@@ -68,7 +83,11 @@ export default function LeavePage() {
       if (requestsRes.data) setRequests(requestsRes.data.requests);
       if (typesRes.data) setLeaveTypes(typesRes.data);
     } catch (err: any) {
-      setError(err.message || 'Failed to load leave data');
+      toast({
+        title: 'Error',
+        description: err.message || 'Failed to load leave data',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
@@ -96,8 +115,7 @@ export default function LeavePage() {
 
   const handleApplyLeave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
+    setSubmitting(true);
 
     try {
       await leaveApi.applyLeave({
@@ -108,24 +126,50 @@ export default function LeavePage() {
         reason: formData.reason,
       });
 
-      setSuccess('Leave request submitted successfully!');
+      toast({
+        title: 'Success',
+        description: 'Leave request submitted successfully!',
+      });
       setShowApplyModal(false);
       resetForm();
       loadLeaveData();
     } catch (err: any) {
-      setError(err.message || 'Failed to apply for leave');
+      toast({
+        title: 'Error',
+        description: err.message || 'Failed to apply for leave',
+        variant: 'destructive',
+      });
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const handleCancelRequest = async (id: number) => {
-    if (!confirm('Are you sure you want to cancel this leave request?')) return;
+  const openCancelDialog = (id: number) => {
+    setRequestToCancel(id);
+    setShowCancelDialog(true);
+  };
+
+  const handleCancelRequest = async () => {
+    if (!requestToCancel) return;
+    setCancelling(true);
 
     try {
-      await leaveApi.cancelLeaveRequest(id);
-      setSuccess('Leave request cancelled successfully');
+      await leaveApi.cancelLeaveRequest(requestToCancel);
+      toast({
+        title: 'Success',
+        description: 'Leave request cancelled successfully',
+      });
       loadLeaveData();
     } catch (err: any) {
-      setError(err.message || 'Failed to cancel request');
+      toast({
+        title: 'Error',
+        description: err.message || 'Failed to cancel request',
+        variant: 'destructive',
+      });
+    } finally {
+      setCancelling(false);
+      setShowCancelDialog(false);
+      setRequestToCancel(null);
     }
   };
 
@@ -160,18 +204,6 @@ export default function LeavePage() {
   return (
     <DashboardLayout title="Leave Management">
       <div className="space-y-6">
-        {/* Success/Error Messages */}
-        {success && (
-          <Alert className="bg-green-50 border-green-200">
-            <AlertDescription className="text-green-800">{success}</AlertDescription>
-          </Alert>
-        )}
-        {error && (
-          <Alert className="bg-red-50 border-red-200">
-            <AlertDescription className="text-red-800">{error}</AlertDescription>
-          </Alert>
-        )}
-
         {/* Leave Balance Cards */}
         <div>
           <div className="flex justify-between items-center mb-4">
@@ -246,7 +278,7 @@ export default function LeavePage() {
                   loading={loading}
                   formatDate={formatDate}
                   getStatusColor={getStatusColor}
-                  onCancel={handleCancelRequest}
+                  onCancel={openCancelDialog}
                 />
               </TabsContent>
               <TabsContent value="PENDING">
@@ -255,7 +287,7 @@ export default function LeavePage() {
                   loading={loading}
                   formatDate={formatDate}
                   getStatusColor={getStatusColor}
-                  onCancel={handleCancelRequest}
+                  onCancel={openCancelDialog}
                 />
               </TabsContent>
               <TabsContent value="APPROVED">
@@ -264,7 +296,7 @@ export default function LeavePage() {
                   loading={loading}
                   formatDate={formatDate}
                   getStatusColor={getStatusColor}
-                  onCancel={handleCancelRequest}
+                  onCancel={openCancelDialog}
                 />
               </TabsContent>
               <TabsContent value="REJECTED">
@@ -273,7 +305,7 @@ export default function LeavePage() {
                   loading={loading}
                   formatDate={formatDate}
                   getStatusColor={getStatusColor}
-                  onCancel={handleCancelRequest}
+                  onCancel={openCancelDialog}
                 />
               </TabsContent>
             </Tabs>
@@ -285,6 +317,9 @@ export default function LeavePage() {
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Apply for Leave</DialogTitle>
+              <DialogDescription>
+                Submit a leave request by filling in the details below. Your request will be sent for approval.
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleApplyLeave}>
               <div className="space-y-4 py-4">
@@ -367,6 +402,7 @@ export default function LeavePage() {
                 <Button
                   type="button"
                   variant="outline"
+                  disabled={submitting}
                   onClick={() => {
                     setShowApplyModal(false);
                     resetForm();
@@ -374,11 +410,37 @@ export default function LeavePage() {
                 >
                   Cancel
                 </Button>
-                <Button type="submit">Submit Request</Button>
+                <Button type="submit" disabled={submitting}>
+                  {submitting && <Spinner size="sm" className="mr-2" />}
+                  {submitting ? 'Submitting...' : 'Submit Request'}
+                </Button>
               </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>
+
+        {/* Cancel Leave Request Dialog */}
+        <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Cancel Leave Request</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to cancel this leave request? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={cancelling}>Keep Request</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleCancelRequest}
+                disabled={cancelling}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {cancelling && <Spinner size="sm" className="mr-2" />}
+                {cancelling ? 'Cancelling...' : 'Cancel Request'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </DashboardLayout>
   );
@@ -400,7 +462,8 @@ function LeaveRequestsTable({
   onCancel,
 }: LeaveRequestsTableProps) {
   return (
-    <Table>
+    <div className="overflow-x-auto">
+      <Table>
       <TableHeader>
         <TableRow>
           <TableHead>Leave Type</TableHead>
@@ -455,5 +518,6 @@ function LeaveRequestsTable({
         )}
       </TableBody>
     </Table>
+    </div>
   );
 }

@@ -53,7 +53,8 @@ export default function SuperAdminLoginPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@mavihrms.com"
+              placeholder="Enter your email"
+              autoComplete="email"
               required
             />
           </div>
@@ -65,7 +66,8 @@ export default function SuperAdminLoginPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter password"
+              placeholder="Enter your password"
+              autoComplete="current-password"
               required
             />
           </div>

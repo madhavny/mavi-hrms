@@ -1,4 +1,5 @@
 import prisma from '@shared/config/database.js';
+import { auditLeaveApply, auditLeaveApprove, auditLeaveReject, auditLeaveCancel, auditCreate, auditUpdate, auditDelete } from '@shared/utilities/audit.js';
 
 // ==================== LEAVE TYPES ====================
 
@@ -227,6 +228,16 @@ export const applyLeave = async (req, res) => {
     }
   });
 
+  // Log leave application
+  await auditLeaveApply({
+    tenantId,
+    userId,
+    userEmail: req.user.email,
+    leaveRequestId: leaveRequest.id,
+    data: { leaveTypeId, fromDate, toDate, totalDays, reason },
+    req
+  });
+
   return res.status(201).json({
     success: true,
     data: leaveRequest,
@@ -447,6 +458,29 @@ export const reviewLeaveRequest = async (req, res) => {
     return updated;
   });
 
+  // Log leave approval or rejection
+  if (status === 'APPROVED') {
+    await auditLeaveApprove({
+      tenantId,
+      userId: req.user.id,
+      userEmail: req.user.email,
+      leaveRequestId: parseInt(id),
+      oldData: { status: 'PENDING' },
+      newData: { status, reviewComments },
+      req
+    });
+  } else {
+    await auditLeaveReject({
+      tenantId,
+      userId: req.user.id,
+      userEmail: req.user.email,
+      leaveRequestId: parseInt(id),
+      oldData: { status: 'PENDING' },
+      newData: { status, reviewComments },
+      req
+    });
+  }
+
   return res.json({
     success: true,
     data: result,
@@ -498,6 +532,17 @@ export const cancelLeaveRequest = async (req, res) => {
         }
       });
     }
+  });
+
+  // Log leave cancellation
+  await auditLeaveCancel({
+    tenantId,
+    userId,
+    userEmail: req.user.email,
+    leaveRequestId: parseInt(id),
+    oldData: { status: 'PENDING' },
+    newData: { status: 'CANCELLED' },
+    req
   });
 
   return res.json({ success: true, message: 'Leave request cancelled' });

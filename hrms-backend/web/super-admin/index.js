@@ -75,13 +75,12 @@ export const createTenant = async (req, res) => {
 
     const adminRole = roles.find(r => r.code === 'ADMIN');
 
-    // Create admin user with plain password stored
+    // Create admin user (no plain password stored for security)
     const adminUser = await tx.user.create({
       data: {
         tenantId: tenant.id,
         email: adminEmail,
         password: hashedPassword,
-        plainPassword: adminPassword, // SECURITY RISK - for super admin viewing only
         firstName: adminFirstName,
         lastName: adminLastName || '',
         roleId: adminRole.id,
@@ -92,11 +91,24 @@ export const createTenant = async (req, res) => {
     return { tenant, adminUser };
   });
 
+  // Return plain password ONLY in the creation response (one-time display)
   return res.status(201).json({
     success: true,
     data: {
       tenant: result.tenant,
-      adminUser: { id: result.adminUser.id, email: result.adminUser.email }
+      adminUser: {
+        id: result.adminUser.id,
+        email: result.adminUser.email,
+        firstName: adminFirstName,
+        lastName: adminLastName || ''
+      },
+      // One-time password display - not stored in database
+      credentials: {
+        email: adminEmail,
+        password: adminPassword,
+        loginUrl: `/${slug}/login`,
+        warning: 'Save these credentials now. The password cannot be retrieved later.'
+      }
     }
   });
 };
@@ -149,13 +161,13 @@ export const getTenant = async (req, res) => {
     return res.status(404).json({ success: false, message: 'Tenant not found' });
   }
 
-  // Get admin users with plain passwords
+  // Get admin users (no passwords returned for security)
   const adminUsers = await prisma.user.findMany({
     where: {
       tenantId: parseInt(id),
       role: { code: 'ADMIN' }
     },
-    select: { id: true, email: true, plainPassword: true, firstName: true, lastName: true, employeeCode: true }
+    select: { id: true, email: true, firstName: true, lastName: true, employeeCode: true, createdAt: true }
   });
 
   return res.json({ success: true, data: { ...tenant, adminUsers } });

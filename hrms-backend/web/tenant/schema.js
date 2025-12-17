@@ -42,3 +42,20 @@ export const updateUserSchema = Joi.object({
   gender: Joi.string().valid('MALE', 'FEMALE', 'OTHER').optional(),
   isActive: Joi.boolean().optional(),
 });
+
+// Password Reset Schemas
+export const forgotPasswordSchema = Joi.object({
+  email: Joi.string().email().required(),
+  tenant: Joi.string().required(),
+});
+
+export const verifyResetTokenSchema = Joi.object({
+  token: Joi.string().required(),
+  tenant: Joi.string().required(),
+});
+
+export const resetPasswordSchema = Joi.object({
+  token: Joi.string().required(),
+  password: Joi.string().min(8).required(),
+  tenant: Joi.string().required(),
+});

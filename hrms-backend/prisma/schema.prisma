@@ -128,7 +128,6 @@ model User {
   employeeCode    String?  @db.VarChar(20)
   email           String   @db.VarChar(100)
   password        String   @db.VarChar(255)
-  plainPassword   String?  @db.VarChar(255) // For super admin viewing only - security risk!
 
   // Personal Info
   firstName       String   @db.VarChar(50)
@@ -173,6 +172,9 @@ model User {
   leaveRequests   LeaveRequest[] @relation("UserLeaveRequest")
   leaveRequestsAppliedTo LeaveRequest[] @relation("LeaveAppliedTo")
   leaveRequestsReviewed LeaveRequest[] @relation("LeaveReviewer")
+
+  // Password Reset
+  passwordResetTokens PasswordResetToken[]
 
   @@unique([tenantId, email])
   @@unique([tenantId, employeeCode])
@@ -372,4 +374,81 @@ enum LeaveStatus {
   APPROVED
   REJECTED
   CANCELLED
+}
+
+// ==================== AUDIT LOG ====================
+
+model AuditLog {
+  id          Int      @id @default(autoincrement())
+  tenantId    Int?     // Null for super admin actions
+  userId      Int?     // User who performed the action
+  userEmail   String?  @db.VarChar(100) // Store email for reference even if user deleted
+  userType    String   @db.VarChar(20) // SUPER_ADMIN, TENANT_USER
+
+  // Action details
+  action      AuditAction
+  entity      String   @db.VarChar(50) // User, Attendance, LeaveRequest, Tenant, etc.
+  entityId    Int?     // ID of the affected record
+  entityName  String?  @db.VarChar(255) // Human-readable name (e.g., employee name)
+
+  // Change tracking
+  oldValue    Json?    // Previous state
+  newValue    Json?    // New state
+  changes     Json?    // Summary of what changed
+
+  // Request context
+  ipAddress   String?  @db.VarChar(45) // IPv6 compatible
+  userAgent   String?  @db.Text
+
+  // Timestamp
+  createdAt   DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([entity])
+  @@index([entityId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  LOGIN_FAILED
+  PASSWORD_CHANGE
+  PASSWORD_RESET
+  CLOCK_IN
+  CLOCK_OUT
+  LEAVE_APPLY
+  LEAVE_APPROVE
+  LEAVE_REJECT
+  LEAVE_CANCEL
+  STATUS_CHANGE
+  BULK_IMPORT
+  EXPORT
+}
+
+// ==================== PASSWORD RESET ====================
+
+model PasswordResetToken {
+  id          Int       @id @default(autoincrement())
+  tenantId    Int
+  userId      Int
+  token       String    @unique @db.VarChar(64) // SHA256 hash of the token
+  expiresAt   DateTime
+  usedAt      DateTime? // When the token was used
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
 }

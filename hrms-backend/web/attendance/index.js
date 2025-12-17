@@ -1,4 +1,5 @@
 import prisma from '@shared/config/database.js';
+import { auditClockIn, auditClockOut, auditCreate, auditUpdate } from '@shared/utilities/audit.js';
 
 // Clock In
 export const clockIn = async (req, res) => {
@@ -43,6 +44,16 @@ export const clockIn = async (req, res) => {
     }
   });
 
+  // Log clock in
+  await auditClockIn({
+    tenantId,
+    userId,
+    userEmail: req.user.email,
+    attendanceId: attendance.id,
+    data: { date: today, clockIn: attendance.clockIn },
+    req
+  });
+
   return res.json({ success: true, data: attendance, message: 'Clocked in successfully' });
 };
 
@@ -80,6 +91,17 @@ export const clockOut = async (req, res) => {
       clockOut: clockOutTime,
       totalHours: parseFloat(totalHours.toFixed(2))
     }
+  });
+
+  // Log clock out
+  await auditClockOut({
+    tenantId,
+    userId,
+    userEmail: req.user.email,
+    attendanceId: attendance.id,
+    oldData: { clockIn: attendance.clockIn, clockOut: null },
+    newData: { clockIn: attendance.clockIn, clockOut: clockOutTime, totalHours: parseFloat(totalHours.toFixed(2)) },
+    req
   });
 
   return res.json({ success: true, data: updated, message: 'Clocked out successfully' });
@@ -211,6 +233,17 @@ export const markAttendance = async (req, res) => {
     }
   });
 
+  // Log attendance marking
+  await auditCreate({
+    tenantId,
+    userId: req.user.id,
+    userEmail: req.user.email,
+    entity: 'Attendance',
+    entityId: attendance.id,
+    data: { userId: parseInt(userId), date: targetDate, status, clockIn, clockOut, remarks },
+    req
+  });
+
   return res.json({ success: true, data: attendance, message: 'Attendance marked successfully' });
 };
 
@@ -242,6 +275,18 @@ export const updateAttendance = async (req, res) => {
   const attendance = await prisma.attendance.update({
     where: { id: parseInt(id) },
     data: updateData
+  });
+
+  // Log attendance update
+  await auditUpdate({
+    tenantId,
+    userId: req.user.id,
+    userEmail: req.user.email,
+    entity: 'Attendance',
+    entityId: attendance.id,
+    oldData: existing,
+    newData: updateData,
+    req
   });
 
   return res.json({ success: true, data: attendance, message: 'Attendance updated successfully' });

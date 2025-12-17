@@ -14,19 +14,21 @@ import {
 } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clock, LogIn, LogOut, Calendar } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useToast } from '@/hooks/use-toast';
+import { Spinner } from '@/components/ui/spinner';
 
 export default function AttendancePage() {
+  const { toast } = useToast();
   const [attendance, setAttendance] = useState<Attendance[]>([]);
   const [summary, setSummary] = useState<AttendanceSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [todayRecord, setTodayRecord] = useState<Attendance | null>(null);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [clockingIn, setClockingIn] = useState(false);
+  const [clockingOut, setClockingOut] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
-    loadAttendance();
+    loadAttendance(true);
     loadSummary();
 
     // Update current time every second
@@ -37,9 +39,9 @@ export default function AttendancePage() {
     return () => clearInterval(timer);
   }, []);
 
-  const loadAttendance = async () => {
+  const loadAttendance = async (showLoading = false) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const currentDate = new Date();
       const res = await attendanceApi.getMyAttendance({
         month: currentDate.getMonth() + 1,
@@ -57,9 +59,13 @@ export default function AttendancePage() {
         setTodayRecord(todayAtt || null);
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to load attendance');
+      toast({
+        title: 'Error',
+        description: err.message || 'Failed to load attendance',
+        variant: 'destructive',
+      });
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -77,28 +83,56 @@ export default function AttendancePage() {
   };
 
   const handleClockIn = async () => {
-    setError('');
-    setSuccess('');
+    setClockingIn(true);
 
     try {
-      await attendanceApi.clockIn();
-      setSuccess('Clocked in successfully!');
+      const res = await attendanceApi.clockIn();
+      // Immediately update todayRecord with the response
+      if (res.data) {
+        setTodayRecord(res.data);
+      }
+      toast({
+        title: 'Success',
+        description: 'Clocked in successfully!',
+      });
+      // Refresh attendance list and summary
       loadAttendance();
+      loadSummary();
     } catch (err: any) {
-      setError(err.message || 'Failed to clock in');
+      toast({
+        title: 'Error',
+        description: err.message || 'Failed to clock in',
+        variant: 'destructive',
+      });
+    } finally {
+      setClockingIn(false);
     }
   };
 
   const handleClockOut = async () => {
-    setError('');
-    setSuccess('');
+    setClockingOut(true);
 
     try {
-      await attendanceApi.clockOut();
-      setSuccess('Clocked out successfully!');
+      const res = await attendanceApi.clockOut();
+      // Immediately update todayRecord with the response
+      if (res.data) {
+        setTodayRecord(res.data);
+      }
+      toast({
+        title: 'Success',
+        description: 'Clocked out successfully!',
+      });
+      // Refresh attendance list and summary
       loadAttendance();
+      loadSummary();
     } catch (err: any) {
-      setError(err.message || 'Failed to clock out');
+      toast({
+        title: 'Error',
+        description: err.message || 'Failed to clock out',
+        variant: 'destructive',
+      });
+    } finally {
+      setClockingOut(false);
     }
   };
 
@@ -134,24 +168,12 @@ export default function AttendancePage() {
   return (
     <DashboardLayout title="Attendance">
       <div className="space-y-6">
-        {/* Success/Error Messages */}
-        {success && (
-          <Alert className="bg-green-50 border-green-200">
-            <AlertDescription className="text-green-800">{success}</AlertDescription>
-          </Alert>
-        )}
-        {error && (
-          <Alert className="bg-red-50 border-red-200">
-            <AlertDescription className="text-red-800">{error}</AlertDescription>
-          </Alert>
-        )}
-
         {/* Clock In/Out Section */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
-              Today's Attendance
+              Today&apos;s Attendance
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -182,9 +204,13 @@ export default function AttendancePage() {
                   {todayRecord?.clockIn ? formatTime(todayRecord.clockIn) : '--:--'}
                 </p>
                 {!todayRecord?.clockIn ? (
-                  <Button onClick={handleClockIn} className="mt-4" size="lg">
-                    <LogIn className="h-4 w-4 mr-2" />
-                    Clock In
+                  <Button onClick={handleClockIn} className="mt-4" size="lg" disabled={clockingIn}>
+                    {clockingIn ? (
+                      <Spinner size="sm" className="mr-2" />
+                    ) : (
+                      <LogIn className="h-4 w-4 mr-2" />
+                    )}
+                    {clockingIn ? 'Clocking In...' : 'Clock In'}
                   </Button>
                 ) : (
                   <p className="text-sm text-green-600 mt-4">✓ Clocked In</p>
@@ -198,9 +224,13 @@ export default function AttendancePage() {
                   {todayRecord?.clockOut ? formatTime(todayRecord.clockOut) : '--:--'}
                 </p>
                 {todayRecord?.clockIn && !todayRecord?.clockOut ? (
-                  <Button onClick={handleClockOut} className="mt-4" size="lg" variant="destructive">
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Clock Out
+                  <Button onClick={handleClockOut} className="mt-4" size="lg" variant="destructive" disabled={clockingOut}>
+                    {clockingOut ? (
+                      <Spinner size="sm" className="mr-2" />
+                    ) : (
+                      <LogOut className="h-4 w-4 mr-2" />
+                    )}
+                    {clockingOut ? 'Clocking Out...' : 'Clock Out'}
                   </Button>
                 ) : todayRecord?.clockOut ? (
                   <p className="text-sm text-red-600 mt-4">✓ Clocked Out</p>
@@ -257,21 +287,22 @@ export default function AttendancePage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5" />
-              This Month's Attendance
+              This Month&apos;s Attendance
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Clock In</TableHead>
-                  <TableHead>Clock Out</TableHead>
-                  <TableHead>Total Hours</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Remarks</TableHead>
-                </TableRow>
-              </TableHeader>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Clock In</TableHead>
+                    <TableHead>Clock Out</TableHead>
+                    <TableHead>Total Hours</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Remarks</TableHead>
+                  </TableRow>
+                </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
@@ -307,6 +338,7 @@ export default function AttendancePage() {
                 )}
               </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
       </div>

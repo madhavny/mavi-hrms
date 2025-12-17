@@ -14,7 +14,7 @@ import {
   SidebarMenuButton,
   SidebarInset,
 } from '@/components/ui/sidebar';
-import { Home, Users, Calendar, FileText, Settings, LogOut } from 'lucide-react';
+import { Home, Users, Calendar, FileText, Settings, LogOut, UserCheck, Building2 } from 'lucide-react';
 
 export default function TenantDashboard() {
   const router = useRouter();
@@ -118,9 +118,9 @@ export default function TenantDashboard() {
           <main className="p-6">
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <StatCard title="Total Employees" value={stats.totalUsers} />
-              <StatCard title="Active Employees" value={stats.activeUsers} />
-              <StatCard title="Departments" value={stats.departments} />
+              <StatCard title="Total Employees" value={stats.totalUsers} icon={Users} iconColor="text-blue-600" iconBg="bg-blue-100" />
+              <StatCard title="Active Employees" value={stats.activeUsers} icon={UserCheck} iconColor="text-green-600" iconBg="bg-green-100" />
+              <StatCard title="Departments" value={stats.departments} icon={Building2} iconColor="text-purple-600" iconBg="bg-purple-100" />
             </div>
 
             {/* Quick Actions based on role */}
@@ -152,11 +152,26 @@ export default function TenantDashboard() {
   );
 }
 
-function StatCard({ title, value }: { title: string; value: number }) {
+interface StatCardProps {
+  title: string;
+  value: number;
+  icon: React.ComponentType<{ className?: string }>;
+  iconColor: string;
+  iconBg: string;
+}
+
+function StatCard({ title, value, icon: Icon, iconColor, iconBg }: StatCardProps) {
   return (
     <div className="bg-white rounded-lg shadow p-6">
-      <p className="text-sm text-gray-600">{title}</p>
-      <p className="text-3xl font-bold text-gray-900 mt-1">{value}</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-gray-600">{title}</p>
+          <p className="text-3xl font-bold text-gray-900 mt-1">{value}</p>
+        </div>
+        <div className={`p-3 rounded-full ${iconBg}`}>
+          <Icon className={`h-6 w-6 ${iconColor}`} />
+        </div>
+      </div>
     </div>
   );
 }
