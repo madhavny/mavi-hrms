@@ -3,6 +3,7 @@ import path from 'path';
 import logger from '@shared/utilities/logger.js';
 import web from '@web/app.js';
 import { setupGracefulShutdown } from '@shared/config/database.js';
+import { startCelebrationJobs, stopCelebrationJobs } from '@shared/services/celebrations.js';
 
 const PORT = process.env.APP_PORT || 9000;
 const app = express();
@@ -25,6 +26,17 @@ app.listen(PORT, (err) => {
         return;
     }
     logger.info(`🚀 Server running on port ${PORT}`);
+
+    // Start celebration cron jobs (birthday & anniversary checks)
+    startCelebrationJobs();
+});
+
+// Stop cron jobs on shutdown
+process.on('SIGTERM', () => {
+    stopCelebrationJobs();
+});
+process.on('SIGINT', () => {
+    stopCelebrationJobs();
 });
 
 setupGracefulShutdown(app);

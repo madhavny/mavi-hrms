@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { tenantApi } from '@/lib/api';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 export default function TenantLoginPage() {
   const router = useRouter();
@@ -39,16 +40,21 @@ export default function TenantLoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4 relative">
+      {/* Theme Toggle - Top Right */}
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+
+      <div className="w-full max-w-md p-6 sm:p-8 bg-white dark:bg-gray-800 rounded-lg shadow-md dark:shadow-gray-900/50">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Mavi HRMS</h1>
-          <p className="text-gray-600 mt-2 capitalize">{tenantSlug.replace(/-/g, ' ')}</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Mavi HRMS</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2 capitalize">{tenantSlug.replace(/-/g, ' ')}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md">{error}</div>
+            <div className="p-3 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-md">{error}</div>
           )}
 
           <div className="space-y-2">
@@ -85,7 +91,7 @@ export default function TenantLoginPage() {
         <div className="mt-6 text-center">
           <Link
             href={`/${tenantSlug}/forgot-password`}
-            className="text-sm text-blue-600 hover:text-blue-500"
+            className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300"
           >
             Forgot your password?
           </Link>

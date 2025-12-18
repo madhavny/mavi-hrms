@@ -56,6 +56,34 @@ model Tenant {
   departments     Department[]
   designations    Designation[]
   locations       Location[]
+  emailPreferences EmailPreference[]
+  goals           Goal[]
+  reviewCycles    ReviewCycle[]
+  reviewQuestions ReviewQuestion[]
+  projects        Project[]
+  timeLogs        TimeLog[]
+  expenseCategories ExpenseCategory[]
+  expenseClaims   ExpenseClaim[]
+  jobPostings     JobPosting[]
+  jobApplications JobApplication[]
+  interviews      Interview[]
+  trainingPrograms TrainingProgram[]
+  trainingEnrollments TrainingEnrollment[]
+  skills           Skill[]
+  employeeSkills   EmployeeSkill[]
+  assets           Asset[]
+  assetAllocations AssetAllocation[]
+  documents        Document[]
+  employeeDocuments EmployeeDocument[]
+  bonuses          Bonus[]
+  incentiveSchemes IncentiveScheme[]
+  incentiveRecords IncentiveRecord[]
+  reportTemplates  ReportTemplate[]
+  generatedReports GeneratedReport[]
+  weeklyOffConfig  WeeklyOffConfig?
+  holidays         Holiday[]
+  optionalHolidayQuotas OptionalHolidayQuota[]
+  optionalHolidaySelections OptionalHolidaySelection[]
 
   @@index([slug])
   @@index([status])
@@ -176,6 +204,74 @@ model User {
   // Password Reset
   passwordResetTokens PasswordResetToken[]
 
+  // Payroll Relations
+  salaryStructures  SalaryStructure[] @relation("UserSalaryStructure")
+  payslips          Payslip[] @relation("UserPayslip")
+  taxDeclarations   TaxDeclaration[] @relation("UserTaxDeclaration")
+
+  // Notifications
+  notifications     Notification[] @relation("UserNotifications")
+
+  // Email Preferences
+  emailPreference   EmailPreference?
+
+  // Goals
+  goals             Goal[]
+
+  // Performance Reviews
+  employeeReviews   PerformanceReview[] @relation("EmployeeReviews")
+  managerReviews    PerformanceReview[] @relation("ManagerReviews")
+
+  // Time Tracking
+  projectMemberships ProjectMember[]
+  timeLogs           TimeLog[]
+  approvedTimeLogs   TimeLog[]         @relation("TimeLogApprover")
+
+  // Expenses
+  expenseClaims      ExpenseClaim[]
+  approvedExpenses   ExpenseClaim[]    @relation("ExpenseApprover")
+
+  // Recruitment
+  createdJobs        JobPosting[]      @relation("JobCreator")
+  referredApplications JobApplication[] @relation("ApplicationReferrer")
+  interviews         Interview[]       @relation("Interviewer")
+
+  // Training
+  trainedPrograms    TrainingProgram[] @relation("Trainer")
+  createdPrograms    TrainingProgram[] @relation("TrainingCreator")
+  trainingEnrollments TrainingEnrollment[]
+
+  // Skills
+  employeeSkills     EmployeeSkill[]   @relation("EmployeeSkills")
+  certifiedSkills    EmployeeSkill[]   @relation("SkillCertifier")
+
+  // Assets
+  currentAssets      Asset[]           @relation("CurrentAssetHolder")
+  assetAllocations   AssetAllocation[] @relation("AssetAllocations")
+  allocatedAssets    AssetAllocation[] @relation("AssetAllocator")
+  returnedAssets     AssetAllocation[] @relation("AssetReturner")
+
+  // Documents
+  uploadedDocuments  Document[]        @relation("DocumentUploader")
+  employeeDocuments  EmployeeDocument[] @relation("EmployeeDocuments")
+  verifiedDocuments  EmployeeDocument[] @relation("DocumentVerifier")
+
+  // Bonus & Incentives
+  bonuses            Bonus[]           @relation("UserBonuses")
+  requestedBonuses   Bonus[]           @relation("BonusRequester")
+  approvedBonuses    Bonus[]           @relation("BonusApprover")
+  createdIncentiveSchemes IncentiveScheme[] @relation("IncentiveSchemeCreator")
+  incentiveRecords   IncentiveRecord[] @relation("UserIncentives")
+  approvedIncentives IncentiveRecord[] @relation("IncentiveApprover")
+
+  // Custom Reports
+  createdReportTemplates ReportTemplate[]  @relation("ReportTemplateCreator")
+  generatedReports       GeneratedReport[] @relation("GeneratedReportGenerator")
+
+  // Holidays
+  createdHolidays           Holiday[]                   @relation("HolidayCreator")
+  optionalHolidaySelections OptionalHolidaySelection[]
+
   @@unique([tenantId, email])
   @@unique([tenantId, employeeCode])
   @@index([tenantId])
@@ -202,6 +298,8 @@ model Department {
   parent      Department? @relation("DeptHierarchy", fields: [parentId], references: [id])
   children    Department[] @relation("DeptHierarchy")
   users       User[]
+  goals       Goal[]
+  jobPostings JobPosting[]
 
   @@unique([tenantId, code])
   @@index([tenantId])
@@ -221,6 +319,7 @@ model Designation {
   // Relations
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   users       User[]
+  jobPostings JobPosting[]
 
   @@unique([tenantId, code])
   @@index([tenantId])
@@ -244,6 +343,8 @@ model Location {
   // Relations
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   users       User[]
+  jobPostings JobPosting[]
+  assets      Asset[]
 
   @@unique([tenantId, code])
   @@index([tenantId])
@@ -451,4 +552,1657 @@ model PasswordResetToken {
   @@index([token])
   @@index([expiresAt])
   @@map("password_reset_tokens")
+}
+
+// ==================== PAYROLL MANAGEMENT ====================
+
+// Salary Components (Basic, HRA, DA, PF, etc.)
+model SalaryComponent {
+  id              Int      @id @default(autoincrement())
+  tenantId        Int
+  name            String   @db.VarChar(100) // Basic Salary, HRA, DA, Medical, PF, etc.
+  code            String   @db.VarChar(20)
+  type            SalaryComponentType
+  calculationType CalculationType @default(FIXED) // FIXED amount or PERCENTAGE of basic
+  defaultValue    Float?   // Default amount or percentage
+  isTaxable       Boolean  @default(true)
+  isStatutory     Boolean  @default(false) // PF, ESI, etc.
+  isActive        Boolean  @default(true)
+  order           Int      @default(0) // Display order
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  structureComponents SalaryStructureComponent[]
+  payslipComponents   PayslipComponent[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@map("salary_components")
+}
+
+enum SalaryComponentType {
+  EARNING      // Basic, HRA, DA, Bonus
+  DEDUCTION    // PF, ESI, Tax, Loan
+  REIMBURSEMENT // Medical, Travel, Food
+}
+
+enum CalculationType {
+  FIXED       // Fixed amount
+  PERCENTAGE  // Percentage of basic
+}
+
+// Employee Salary Structure
+model SalaryStructure {
+  id            Int       @id @default(autoincrement())
+  tenantId      Int
+  userId        Int
+  ctc           Float     // Cost to Company (Annual)
+  basicSalary   Float     // Monthly basic salary
+  grossSalary   Float     // Monthly gross (before deductions)
+  netSalary     Float     // Monthly net (after deductions)
+  effectiveFrom DateTime  @db.Date
+  effectiveTo   DateTime? @db.Date // Null means current
+  isActive      Boolean   @default(true)
+  remarks       String?   @db.Text
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  createdBy     Int?
+
+  // Relations
+  user          User      @relation("UserSalaryStructure", fields: [userId], references: [id], onDelete: Cascade)
+  components    SalaryStructureComponent[]
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([effectiveFrom])
+  @@map("salary_structures")
+}
+
+// Components within a Salary Structure
+model SalaryStructureComponent {
+  id                  Int      @id @default(autoincrement())
+  salaryStructureId   Int
+  salaryComponentId   Int
+  calculationType     CalculationType
+  amount              Float?   // Fixed amount (if FIXED)
+  percentage          Float?   // Percentage of basic (if PERCENTAGE)
+  calculatedAmount    Float    // Final calculated monthly amount
+  createdAt           DateTime @default(now())
+
+  // Relations
+  salaryStructure     SalaryStructure @relation(fields: [salaryStructureId], references: [id], onDelete: Cascade)
+  salaryComponent     SalaryComponent @relation(fields: [salaryComponentId], references: [id])
+
+  @@unique([salaryStructureId, salaryComponentId])
+  @@map("salary_structure_components")
+}
+
+// Monthly Payslip
+model Payslip {
+  id              Int       @id @default(autoincrement())
+  tenantId        Int
+  userId          Int
+  month           Int       // 1-12
+  year            Int
+
+  // Salary Details
+  basicSalary     Float
+  grossEarnings   Float     // Total earnings
+  totalDeductions Float     // Total deductions
+  netSalary       Float     // Take home
+
+  // Working Days
+  totalWorkingDays  Int     @default(0)
+  daysWorked        Int     @default(0)
+  leaveDays         Float   @default(0)
+  lopDays           Float   @default(0) // Loss of Pay
+
+  // Status
+  status          PayslipStatus @default(DRAFT)
+  generatedAt     DateTime?
+  processedAt     DateTime?
+  paidAt          DateTime?
+  paidBy          Int?
+
+  // PDF
+  pdfUrl          String?  @db.VarChar(500)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user            User     @relation("UserPayslip", fields: [userId], references: [id], onDelete: Cascade)
+  components      PayslipComponent[]
+  bonuses         Bonus[]  @relation("PayslipBonuses")
+  incentives      IncentiveRecord[] @relation("PayslipIncentives")
+
+  @@unique([tenantId, userId, month, year])
+  @@index([tenantId])
+  @@index([userId])
+  @@index([month, year])
+  @@index([status])
+  @@map("payslips")
+}
+
+enum PayslipStatus {
+  DRAFT       // Generated but not finalized
+  PROCESSED   // Finalized, ready for payment
+  PAID        // Payment completed
+  CANCELLED   // Cancelled
+}
+
+// Individual components in a Payslip
+model PayslipComponent {
+  id              Int      @id @default(autoincrement())
+  payslipId       Int
+  salaryComponentId Int
+  componentName   String   @db.VarChar(100)
+  componentType   SalaryComponentType
+  amount          Float
+  createdAt       DateTime @default(now())
+
+  // Relations
+  payslip         Payslip  @relation(fields: [payslipId], references: [id], onDelete: Cascade)
+  salaryComponent SalaryComponent @relation(fields: [salaryComponentId], references: [id])
+
+  @@map("payslip_components")
+}
+
+// Tax Slabs Configuration (Indian Tax Regime)
+model TaxSlab {
+  id              Int      @id @default(autoincrement())
+  tenantId        Int
+  regime          TaxRegime @default(NEW) // OLD or NEW regime
+  financialYear   String   @db.VarChar(10) // e.g., "2024-25"
+  fromAmount      Float    // Slab start
+  toAmount        Float?   // Slab end (null for last slab)
+  percentage      Float    // Tax percentage
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([financialYear])
+  @@map("tax_slabs")
+}
+
+enum TaxRegime {
+  OLD
+  NEW
+}
+
+// Employee Tax Declaration (for deductions under old regime)
+model TaxDeclaration {
+  id              Int      @id @default(autoincrement())
+  tenantId        Int
+  userId          Int
+  financialYear   String   @db.VarChar(10) // e.g., "2024-25"
+  regime          TaxRegime @default(NEW)
+
+  // Section 80C (max 1.5L)
+  section80C      Float    @default(0) // PPF, ELSS, LIC, etc.
+
+  // Section 80D (Health Insurance)
+  section80D      Float    @default(0) // Self + Family + Parents
+
+  // Section 80E (Education Loan)
+  section80E      Float    @default(0)
+
+  // Section 80G (Donations)
+  section80G      Float    @default(0)
+
+  // House Rent
+  hra             Float    @default(0)
+  rentPaid        Float    @default(0)
+
+  // Home Loan
+  homeLoanInterest Float   @default(0) // Section 24
+  homeLoanPrincipal Float  @default(0) // Part of 80C
+
+  // Other
+  nps             Float    @default(0) // Section 80CCD(1B) - additional 50K
+  otherDeductions Float    @default(0)
+
+  // Calculated
+  totalDeductions Float    @default(0)
+  taxableIncome   Float    @default(0)
+  estimatedTax    Float    @default(0)
+
+  // Status
+  status          DeclarationStatus @default(DRAFT)
+  submittedAt     DateTime?
+  approvedBy      Int?
+  approvedAt      DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user            User     @relation("UserTaxDeclaration", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId, financialYear])
+  @@index([tenantId])
+  @@index([userId])
+  @@map("tax_declarations")
+}
+
+enum DeclarationStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+// ==================== BONUS & INCENTIVES ====================
+
+enum BonusType {
+  PERFORMANCE    // Performance-based bonus
+  FESTIVAL       // Diwali, Eid, Christmas bonus
+  REFERRAL       // Employee referral bonus
+  RETENTION      // Retention bonus
+  JOINING        // Signing/joining bonus
+  ANNUAL         // Annual bonus
+  SPOT           // Spot bonus for achievements
+  PROJECT        // Project completion bonus
+  OTHER          // Other bonus types
+}
+
+enum BonusStatus {
+  PENDING        // Awaiting approval
+  APPROVED       // Approved, waiting for payment
+  REJECTED       // Rejected
+  PAID           // Paid to employee
+  CANCELLED      // Cancelled
+}
+
+enum IncentiveFrequency {
+  MONTHLY
+  QUARTERLY
+  HALF_YEARLY
+  ANNUALLY
+  ONE_TIME
+}
+
+// Individual Bonus Records
+model Bonus {
+  id              Int         @id @default(autoincrement())
+  tenantId        Int
+  userId          Int
+  bonusType       BonusType   @default(PERFORMANCE)
+  title           String      @db.VarChar(200)
+  description     String?     @db.Text
+  amount          Float
+  currency        String      @default("INR") @db.VarChar(10)
+  effectiveDate   DateTime    @db.Date        // Date when bonus is effective
+  paymentDate     DateTime?   @db.Date        // Actual payment date
+
+  // Approval workflow
+  status          BonusStatus @default(PENDING)
+  requestedBy     Int                         // Who requested/nominated
+  approvedBy      Int?
+  approvedAt      DateTime?
+  rejectionReason String?     @db.Text
+
+  // Tax handling
+  isTaxable       Boolean     @default(true)
+  taxAmount       Float?                      // Calculated tax on bonus
+  netAmount       Float?                      // Amount after tax
+
+  // Link to payslip if included
+  payslipId       Int?
+
+  // Notes
+  remarks         String?     @db.Text
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  // Relations
+  tenant          Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user            User        @relation("UserBonuses", fields: [userId], references: [id], onDelete: Cascade)
+  requester       User        @relation("BonusRequester", fields: [requestedBy], references: [id])
+  approver        User?       @relation("BonusApprover", fields: [approvedBy], references: [id])
+  payslip         Payslip?    @relation("PayslipBonuses", fields: [payslipId], references: [id])
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([status])
+  @@index([effectiveDate])
+  @@map("bonuses")
+}
+
+// Incentive Scheme Definition
+model IncentiveScheme {
+  id              Int                 @id @default(autoincrement())
+  tenantId        Int
+  name            String              @db.VarChar(200)
+  code            String              @db.VarChar(50)
+  description     String?             @db.Text
+
+  // Scheme type and frequency
+  frequency       IncentiveFrequency  @default(QUARTERLY)
+
+  // Criteria
+  criteria        String?             @db.Text  // JSON or text description of criteria
+  targetType      String?             @db.VarChar(50)  // SALES, ATTENDANCE, PERFORMANCE, CUSTOM
+  targetValue     Float?                               // Target to achieve
+  targetUnit      String?             @db.VarChar(20)  // %, amount, count, etc.
+
+  // Payout
+  payoutType      String              @default("FIXED") @db.VarChar(20)  // FIXED, PERCENTAGE, SLAB
+  payoutValue     Float?                               // Fixed amount or percentage
+  slabs           Json?                                // For slab-based: [{from, to, amount/percent}]
+  maxPayout       Float?                               // Maximum payout cap
+
+  // Eligibility
+  applicableTo    String              @default("ALL") @db.VarChar(50)  // ALL, DEPARTMENT, DESIGNATION, ROLE
+  applicableIds   Int[]               @default([])                     // IDs of departments/designations/roles
+
+  // Validity
+  startDate       DateTime            @db.Date
+  endDate         DateTime?           @db.Date
+  isActive        Boolean             @default(true)
+
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  createdBy       Int
+
+  // Relations
+  tenant          Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  creator         User                @relation("IncentiveSchemeCreator", fields: [createdBy], references: [id])
+  records         IncentiveRecord[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@index([isActive])
+  @@map("incentive_schemes")
+}
+
+// Individual Incentive Records
+model IncentiveRecord {
+  id              Int             @id @default(autoincrement())
+  tenantId        Int
+  schemeId        Int
+  userId          Int
+
+  // Period
+  periodStart     DateTime        @db.Date
+  periodEnd       DateTime        @db.Date
+
+  // Achievement
+  targetValue     Float?                           // Target for this period
+  achievedValue   Float?                           // What was achieved
+  achievementPercent Float?                        // Achievement percentage
+
+  // Payout
+  calculatedAmount Float                           // Calculated incentive amount
+  adjustedAmount  Float?                           // After any adjustments
+  finalAmount     Float                            // Final payout amount
+  currency        String          @default("INR") @db.VarChar(10)
+
+  // Tax handling
+  isTaxable       Boolean         @default(true)
+  taxAmount       Float?
+  netAmount       Float?
+
+  // Approval workflow
+  status          BonusStatus     @default(PENDING)
+  approvedBy      Int?
+  approvedAt      DateTime?
+  paidAt          DateTime?
+
+  // Link to payslip
+  payslipId       Int?
+
+  remarks         String?         @db.Text
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  // Relations
+  tenant          Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  scheme          IncentiveScheme @relation(fields: [schemeId], references: [id], onDelete: Cascade)
+  user            User            @relation("UserIncentives", fields: [userId], references: [id], onDelete: Cascade)
+  approver        User?           @relation("IncentiveApprover", fields: [approvedBy], references: [id])
+  payslip         Payslip?        @relation("PayslipIncentives", fields: [payslipId], references: [id])
+
+  @@unique([schemeId, userId, periodStart, periodEnd])
+  @@index([tenantId])
+  @@index([userId])
+  @@index([status])
+  @@map("incentive_records")
+}
+
+// ==================== CUSTOM REPORT BUILDER ====================
+
+enum ReportDataSource {
+  EMPLOYEES
+  ATTENDANCE
+  LEAVE
+  PAYROLL
+  GOALS
+  REVIEWS
+  TRAINING
+  EXPENSES
+  ASSETS
+  RECRUITMENT
+}
+
+enum ReportFieldType {
+  TEXT
+  NUMBER
+  DATE
+  BOOLEAN
+  CURRENCY
+  PERCENTAGE
+  ENUM
+}
+
+enum ChartType {
+  TABLE
+  BAR
+  LINE
+  PIE
+  AREA
+  DONUT
+}
+
+enum AggregationType {
+  NONE
+  COUNT
+  SUM
+  AVG
+  MIN
+  MAX
+}
+
+// Report Template - saved report configurations
+model ReportTemplate {
+  id              Int             @id @default(autoincrement())
+  tenantId        Int
+  name            String          @db.VarChar(200)
+  description     String?         @db.Text
+  dataSource      ReportDataSource
+
+  // Configuration stored as JSON
+  selectedFields  Json            // Array of field IDs/names to include
+  filters         Json?           // Filter conditions [{field, operator, value}]
+  groupBy         Json?           // Group by fields
+  sortBy          Json?           // Sort configuration [{field, direction}]
+  aggregations    Json?           // Aggregation config [{field, type}]
+
+  // Visualization
+  chartType       ChartType       @default(TABLE)
+  chartConfig     Json?           // Chart-specific options (colors, labels, etc.)
+
+  // Access control
+  isPublic        Boolean         @default(false)  // Available to all users
+  isSystem        Boolean         @default(false)  // Pre-built system report
+
+  // Scheduling (optional)
+  schedule        String?         @db.VarChar(50)  // DAILY, WEEKLY, MONTHLY, or cron expression
+  lastRunAt       DateTime?
+  nextRunAt       DateTime?
+
+  // Audit
+  createdBy       Int
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  // Relations
+  tenant          Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  creator         User            @relation("ReportTemplateCreator", fields: [createdBy], references: [id])
+  generatedReports GeneratedReport[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@index([dataSource])
+  @@index([createdBy])
+  @@map("report_templates")
+}
+
+// Generated Report - actual report runs with data
+model GeneratedReport {
+  id              Int             @id @default(autoincrement())
+  tenantId        Int
+  templateId      Int
+
+  // Report parameters at generation time
+  parameters      Json?           // Runtime parameters (date range, filters)
+
+  // Generated data
+  data            Json            // The actual report data
+  summary         Json?           // Summary statistics
+  rowCount        Int             @default(0)
+
+  // Export options
+  exportFormat    String?         @db.VarChar(20)  // PDF, EXCEL, CSV
+  exportUrl       String?         @db.VarChar(500)
+
+  // Audit
+  generatedBy     Int
+  generatedAt     DateTime        @default(now())
+  expiresAt       DateTime?       // Auto-delete after this date
+
+  // Relations
+  tenant          Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  template        ReportTemplate  @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  generator       User            @relation("GeneratedReportGenerator", fields: [generatedBy], references: [id])
+
+  @@index([tenantId])
+  @@index([templateId])
+  @@index([generatedBy])
+  @@index([generatedAt])
+  @@map("generated_reports")
+}
+
+// ==================== NOTIFICATIONS ====================
+
+model Notification {
+  id          Int       @id @default(autoincrement())
+  tenantId    Int
+  userId      Int
+  type        NotificationType
+  title       String    @db.VarChar(255)
+  message     String    @db.Text
+  link        String?   @db.VarChar(500) // URL to navigate
+  metadata    Json?     // Additional context data
+  isRead      Boolean   @default(false)
+  readAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  user        User      @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  // Leave related
+  LEAVE_REQUESTED       // Someone requested leave (for approvers)
+  LEAVE_APPROVED        // Your leave was approved
+  LEAVE_REJECTED        // Your leave was rejected
+  LEAVE_CANCELLED       // Leave was cancelled
+
+  // Attendance
+  ATTENDANCE_MARKED     // Attendance marked by admin
+  ATTENDANCE_REGULARIZATION // Regularization request
+
+  // Payroll
+  PAYSLIP_GENERATED     // New payslip available
+  SALARY_REVISED        // Salary structure updated
+
+  // Employee
+  EMPLOYEE_JOINED       // New employee joined
+  EMPLOYEE_EXIT         // Employee leaving
+
+  // System
+  PASSWORD_CHANGED      // Password was changed
+  PROFILE_UPDATED       // Profile was updated
+
+  // Reminders
+  BIRTHDAY_REMINDER     // Birthday today
+  ANNIVERSARY_REMINDER  // Work anniversary
+
+  // General
+  ANNOUNCEMENT          // Company announcement
+  SYSTEM_ALERT          // System notification
+}
+
+// Email Preferences - controls which email notifications a user receives
+model EmailPreference {
+  id        Int      @id @default(autoincrement())
+  tenantId  Int
+  userId    Int      @unique
+
+  // Leave notifications
+  leaveRequested     Boolean @default(true)  // When someone applies for leave (for managers)
+  leaveApproved      Boolean @default(true)  // When leave is approved
+  leaveRejected      Boolean @default(true)  // When leave is rejected
+
+  // Payroll notifications
+  payslipGenerated   Boolean @default(true)  // When payslip is available
+  salaryRevised      Boolean @default(true)  // When salary is updated
+
+  // Reminders
+  birthdayReminder   Boolean @default(true)  // Birthday reminders
+  anniversaryReminder Boolean @default(true) // Work anniversary reminders
+
+  // General
+  announcements      Boolean @default(true)  // Company announcements
+  systemAlerts       Boolean @default(true)  // System notifications
+
+  // Digest preferences
+  digestEnabled      Boolean @default(false) // Receive daily digest instead of individual emails
+  digestTime         String  @default("09:00") // Time to send digest (HH:mm format)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId])
+  @@map("email_preferences")
+}
+
+// ==================== GOAL SETTING (OKRs/KPIs) ====================
+
+enum GoalType {
+  INDIVIDUAL
+  TEAM
+  COMPANY
+}
+
+enum GoalCategory {
+  OKR
+  KPI
+}
+
+enum GoalStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model Goal {
+  id           Int          @id @default(autoincrement())
+  tenantId     Int
+  userId       Int          // Owner of the goal
+  title        String
+  description  String?      @db.Text
+  type         GoalType     @default(INDIVIDUAL)
+  category     GoalCategory @default(OKR)
+  targetValue  Float?
+  currentValue Float?       @default(0)
+  unit         String?      // %, $, count, etc.
+  startDate    DateTime
+  dueDate      DateTime
+  status       GoalStatus   @default(NOT_STARTED)
+  progress     Float        @default(0) // 0-100
+  weight       Float        @default(1) // Weight for roll-up calculations
+  parentId     Int?         // For cascading goals (company → team → individual)
+  departmentId Int?         // For team goals
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  // Relations
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent      Goal?       @relation("GoalHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children    Goal[]      @relation("GoalHierarchy")
+  department  Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  keyResults  KeyResult[]
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([parentId])
+  @@index([status])
+  @@map("goals")
+}
+
+model KeyResult {
+  id           Int        @id @default(autoincrement())
+  goalId       Int
+  title        String
+  description  String?    @db.Text
+  targetValue  Float
+  currentValue Float      @default(0)
+  unit         String?    // %, $, count, etc.
+  weight       Float      @default(1) // Weight for goal progress calculation
+  status       GoalStatus @default(NOT_STARTED)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  // Relations
+  goal Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+
+  @@index([goalId])
+  @@map("key_results")
+}
+
+// ==================== PERFORMANCE REVIEWS ====================
+
+enum ReviewCycleStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum ReviewStatus {
+  PENDING
+  SELF_REVIEW
+  MANAGER_REVIEW
+  CALIBRATION
+  COMPLETED
+}
+
+enum QuestionCategory {
+  COMPETENCY
+  BEHAVIOR
+  GOALS
+  CULTURE
+  LEADERSHIP
+}
+
+enum QuestionType {
+  RATING
+  TEXT
+  MULTIPLE_CHOICE
+  YES_NO
+}
+
+enum RespondentType {
+  SELF
+  MANAGER
+  PEER
+  SKIP_LEVEL
+}
+
+model ReviewCycle {
+  id          Int               @id @default(autoincrement())
+  tenantId    Int
+  name        String            // Q1 2025, Annual 2025
+  description String?           @db.Text
+  startDate   DateTime
+  endDate     DateTime
+  selfReviewDeadline   DateTime?
+  managerReviewDeadline DateTime?
+  status      ReviewCycleStatus @default(DRAFT)
+  isActive    Boolean           @default(true)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  createdBy   Int?
+
+  // Relations
+  tenant      Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  reviews     PerformanceReview[]
+  questions   ReviewCycleQuestion[]
+
+  @@index([tenantId])
+  @@index([status])
+  @@map("review_cycles")
+}
+
+model ReviewQuestion {
+  id          Int              @id @default(autoincrement())
+  tenantId    Int
+  question    String           @db.Text
+  description String?          @db.Text
+  category    QuestionCategory @default(COMPETENCY)
+  type        QuestionType     @default(RATING)
+  options     String?          @db.Text // JSON array for MULTIPLE_CHOICE
+  isRequired  Boolean          @default(true)
+  isActive    Boolean          @default(true)
+  order       Int              @default(0)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  // Relations
+  tenant      Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  cycleQuestions ReviewCycleQuestion[]
+  responses   ReviewResponse[]
+
+  @@index([tenantId])
+  @@index([category])
+  @@map("review_questions")
+}
+
+model ReviewCycleQuestion {
+  id          Int      @id @default(autoincrement())
+  cycleId     Int
+  questionId  Int
+  order       Int      @default(0)
+  weight      Float    @default(1) // Weight for rating calculation
+
+  // Relations
+  cycle       ReviewCycle    @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  question    ReviewQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([cycleId, questionId])
+  @@map("review_cycle_questions")
+}
+
+model PerformanceReview {
+  id            Int          @id @default(autoincrement())
+  cycleId       Int
+  employeeId    Int          // User being reviewed
+  reviewerId    Int          // Manager doing the review
+  status        ReviewStatus @default(PENDING)
+
+  // Ratings (1-5 scale)
+  selfRating    Float?
+  managerRating Float?
+  finalRating   Float?
+
+  // Feedback
+  selfStrengths     String?  @db.Text
+  selfImprovements  String?  @db.Text
+  selfComments      String?  @db.Text
+
+  managerStrengths    String?  @db.Text
+  managerImprovements String?  @db.Text
+  managerComments     String?  @db.Text
+
+  // Dates
+  selfReviewDate    DateTime?
+  managerReviewDate DateTime?
+  completedAt       DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  cycle       ReviewCycle      @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  employee    User             @relation("EmployeeReviews", fields: [employeeId], references: [id], onDelete: Cascade)
+  reviewer    User             @relation("ManagerReviews", fields: [reviewerId], references: [id], onDelete: Cascade)
+  responses   ReviewResponse[]
+  goals       ReviewGoal[]
+
+  @@unique([cycleId, employeeId])
+  @@index([cycleId])
+  @@index([employeeId])
+  @@index([reviewerId])
+  @@index([status])
+  @@map("performance_reviews")
+}
+
+model ReviewResponse {
+  id             Int            @id @default(autoincrement())
+  reviewId       Int
+  questionId     Int
+  respondentType RespondentType @default(SELF)
+  rating         Int?           // 1-5
+  response       String?        @db.Text
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  // Relations
+  review    PerformanceReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  question  ReviewQuestion    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([reviewId, questionId, respondentType])
+  @@index([reviewId])
+  @@map("review_responses")
+}
+
+model ReviewGoal {
+  id           Int    @id @default(autoincrement())
+  reviewId     Int
+  goalId       Int?   // Link to Goal model if exists
+  title        String
+  achievement  Float? // 0-100 percentage
+  selfComment  String? @db.Text
+  managerComment String? @db.Text
+  createdAt    DateTime @default(now())
+
+  // Relations
+  review PerformanceReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@index([reviewId])
+  @@map("review_goals")
+}
+
+// ==================== PROJECT TIME TRACKING ====================
+
+enum ProjectStatus {
+  ACTIVE
+  COMPLETED
+  ON_HOLD
+  CANCELLED
+}
+
+enum ProjectMemberRole {
+  LEAD
+  MEMBER
+}
+
+enum TimeLogStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+model Project {
+  id          Int           @id @default(autoincrement())
+  tenantId    Int
+  name        String
+  code        String
+  description String?       @db.Text
+  clientName  String?
+  startDate   DateTime
+  endDate     DateTime?
+  status      ProjectStatus @default(ACTIVE)
+  budgetHours Float?
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  createdBy   Int?
+
+  // Relations
+  tenant      Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  members     ProjectMember[]
+  timeLogs    TimeLog[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@index([status])
+  @@map("projects")
+}
+
+model ProjectMember {
+  id         Int               @id @default(autoincrement())
+  projectId  Int
+  userId     Int
+  role       ProjectMemberRole @default(MEMBER)
+  hourlyRate Float?            // For billing purposes
+  joinedAt   DateTime          @default(now())
+  leftAt     DateTime?
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+  @@map("project_members")
+}
+
+model TimeLog {
+  id          Int           @id @default(autoincrement())
+  tenantId    Int
+  userId      Int
+  projectId   Int?
+  date        DateTime      @db.Date
+  hours       Float
+  description String?       @db.Text
+  isBillable  Boolean       @default(true)
+  status      TimeLogStatus @default(DRAFT)
+  approvedBy  Int?
+  approvedAt  DateTime?
+  rejectedReason String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project  Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  approver User?    @relation("TimeLogApprover", fields: [approvedBy], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([projectId])
+  @@index([date])
+  @@index([status])
+  @@map("time_logs")
+}
+
+// ==================== EXPENSE MANAGEMENT ====================
+
+enum ExpenseStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+  REIMBURSED
+}
+
+model ExpenseCategory {
+  id             Int      @id @default(autoincrement())
+  tenantId       Int
+  name           String   // Travel, Food, Accommodation, Office Supplies
+  description    String?
+  maxLimit       Float?   // Per claim limit
+  requiresReceipt Boolean @default(true)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  tenant   Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  claims   ExpenseClaim[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("expense_categories")
+}
+
+model ExpenseClaim {
+  id           Int           @id @default(autoincrement())
+  tenantId     Int
+  userId       Int
+  categoryId   Int
+  amount       Float
+  currency     String        @default("INR")
+  date         DateTime      @db.Date
+  description  String        @db.Text
+  receiptUrl   String?       // URL to uploaded receipt
+  notes        String?       @db.Text
+  status       ExpenseStatus @default(DRAFT)
+  approvedBy   Int?
+  approvedAt   DateTime?
+  rejectedReason String?
+  reimbursedAt DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  // Relations
+  tenant   Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category ExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  approver User?           @relation("ExpenseApprover", fields: [approvedBy], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([date])
+  @@map("expense_claims")
+}
+
+// ==================== RECRUITMENT ====================
+
+enum JobStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  CLOSED
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+}
+
+model JobPosting {
+  id             Int            @id @default(autoincrement())
+  tenantId       Int
+  title          String
+  departmentId   Int?
+  designationId  Int?
+  locationId     Int?
+  description    String         @db.Text
+  requirements   String         @db.Text
+  responsibilities String?      @db.Text
+  experience     String         // 0-2 years, 3-5 years, 5+ years
+  salaryMin      Float?
+  salaryMax      Float?
+  currency       String         @default("INR")
+  employmentType EmploymentType @default(FULL_TIME)
+  skills         String?        // Comma-separated skills
+  openings       Int            @default(1)
+  status         JobStatus      @default(DRAFT)
+  postedAt       DateTime?
+  closingDate    DateTime?
+  isRemote       Boolean        @default(false)
+  createdBy      Int
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  // Relations
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  department  Department?  @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  designation Designation? @relation(fields: [designationId], references: [id], onDelete: SetNull)
+  location    Location?    @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  creator     User         @relation("JobCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  applications JobApplication[]
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([departmentId])
+  @@index([locationId])
+  @@map("job_postings")
+}
+
+enum ApplicationStatus {
+  NEW
+  SCREENING
+  SHORTLISTED
+  INTERVIEW
+  OFFER
+  HIRED
+  REJECTED
+  WITHDRAWN
+}
+
+model JobApplication {
+  id            Int               @id @default(autoincrement())
+  tenantId      Int
+  jobPostingId  Int
+  firstName     String
+  lastName      String
+  email         String
+  phone         String
+  resumeUrl     String?
+  coverLetter   String?           @db.Text
+  linkedinUrl   String?
+  portfolioUrl  String?
+  currentCompany String?
+  currentRole   String?
+  noticePeriod  String?           // Immediate, 15 days, 30 days, etc.
+  expectedSalary Float?
+  status        ApplicationStatus @default(NEW)
+  rating        Int?              // 1-5 stars
+  notes         String?           @db.Text
+  source        String?           // LinkedIn, Referral, Website, etc.
+  referredBy    Int?
+  appliedAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  // Relations
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  jobPosting JobPosting @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+  referrer   User?      @relation("ApplicationReferrer", fields: [referredBy], references: [id], onDelete: SetNull)
+  interviews Interview[]
+
+  @@index([tenantId])
+  @@index([jobPostingId])
+  @@index([status])
+  @@index([email])
+  @@map("job_applications")
+}
+
+enum InterviewType {
+  PHONE
+  VIDEO
+  IN_PERSON
+  TECHNICAL
+  HR
+  PANEL
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+model Interview {
+  id            Int             @id @default(autoincrement())
+  tenantId      Int
+  applicationId Int
+  interviewerId Int
+  title         String          // Round 1, Technical Interview, HR Round, etc.
+  type          InterviewType   @default(VIDEO)
+  scheduledAt   DateTime
+  duration      Int             @default(60) // Duration in minutes
+  location      String?         // Meeting link or physical location
+  status        InterviewStatus @default(SCHEDULED)
+  feedback      String?         @db.Text
+  rating        Int?            // 1-5 stars
+  strengths     String?         @db.Text
+  weaknesses    String?         @db.Text
+  recommendation String?        // STRONG_HIRE, HIRE, NO_HIRE, STRONG_NO_HIRE
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  // Relations
+  tenant      Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  application JobApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  interviewer User           @relation("Interviewer", fields: [interviewerId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([applicationId])
+  @@index([interviewerId])
+  @@index([scheduledAt])
+  @@index([status])
+  @@map("interviews")
+}
+
+// ==================== TRAINING ====================
+
+enum TrainingType {
+  INTERNAL
+  EXTERNAL
+  ONLINE
+  WORKSHOP
+  CERTIFICATION
+}
+
+enum TrainingStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum EnrollmentStatus {
+  ENROLLED
+  IN_PROGRESS
+  COMPLETED
+  DROPPED
+  FAILED
+}
+
+model TrainingProgram {
+  id              Int            @id @default(autoincrement())
+  tenantId        Int
+  name            String
+  description     String?        @db.Text
+  type            TrainingType   @default(INTERNAL)
+  category        String?        // Technical, Soft Skills, Compliance, etc.
+  duration        Int            // Duration in hours
+  startDate       DateTime
+  endDate         DateTime
+  trainerId       Int?           // Internal trainer (User ID)
+  externalTrainer String?        // External trainer name
+  venue           String?        // Location or online platform
+  maxParticipants Int?
+  cost            Float?         // Cost per participant
+  currency        String         @default("INR")
+  materials       String?        @db.Text // Course materials, links
+  prerequisites   String?        @db.Text
+  objectives      String?        @db.Text // Learning objectives
+  status          TrainingStatus @default(PLANNED)
+  createdBy       Int
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  // Relations
+  tenant      Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  trainer     User?                @relation("Trainer", fields: [trainerId], references: [id], onDelete: SetNull)
+  creator     User                 @relation("TrainingCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  enrollments TrainingEnrollment[]
+
+  @@index([tenantId])
+  @@index([trainerId])
+  @@index([status])
+  @@index([startDate])
+  @@map("training_programs")
+}
+
+model TrainingEnrollment {
+  id             Int              @id @default(autoincrement())
+  tenantId       Int
+  programId      Int
+  userId         Int
+  status         EnrollmentStatus @default(ENROLLED)
+  enrolledAt     DateTime         @default(now())
+  completedAt    DateTime?
+  score          Float?           // Score/grade if applicable (0-100)
+  feedback       String?          @db.Text // Participant feedback
+  rating         Int?             // 1-5 rating of the training
+  certificateUrl String?
+  notes          String?          @db.Text // Admin notes
+  updatedAt      DateTime         @updatedAt
+
+  // Relations
+  tenant  Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  program TrainingProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([programId, userId])
+  @@index([tenantId])
+  @@index([programId])
+  @@index([userId])
+  @@index([status])
+  @@map("training_enrollments")
+}
+
+// ==================== SKILLS ====================
+
+enum SkillCategory {
+  TECHNICAL
+  SOFT
+  DOMAIN
+  LANGUAGE
+  TOOL
+  CERTIFICATION
+}
+
+model Skill {
+  id          Int           @id @default(autoincrement())
+  tenantId    Int
+  name        String
+  category    SkillCategory @default(TECHNICAL)
+  description String?       @db.Text
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  tenant         Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employeeSkills EmployeeSkill[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@index([category])
+  @@map("skills")
+}
+
+model EmployeeSkill {
+  id           Int       @id @default(autoincrement())
+  tenantId     Int
+  userId       Int
+  skillId      Int
+  level        Int       @default(1) // 1-5 (Beginner, Basic, Intermediate, Advanced, Expert)
+  yearsOfExp   Float?    // Years of experience
+  lastUsed     DateTime? // When skill was last used
+  isCertified  Boolean   @default(false)
+  certifiedAt  DateTime?
+  certifiedBy  Int?      // Manager/HR who verified
+  notes        String?   @db.Text
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relations
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user      User   @relation("EmployeeSkills", fields: [userId], references: [id], onDelete: Cascade)
+  skill     Skill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  certifier User?  @relation("SkillCertifier", fields: [certifiedBy], references: [id], onDelete: SetNull)
+
+  @@unique([userId, skillId])
+  @@index([tenantId])
+  @@index([userId])
+  @@index([skillId])
+  @@index([level])
+  @@map("employee_skills")
+}
+
+// ==================== ASSETS ====================
+
+enum AssetCategory {
+  LAPTOP
+  DESKTOP
+  MONITOR
+  PHONE
+  TABLET
+  KEYBOARD
+  MOUSE
+  HEADSET
+  FURNITURE
+  VEHICLE
+  SOFTWARE
+  OTHER
+}
+
+enum AssetStatus {
+  AVAILABLE
+  ASSIGNED
+  MAINTENANCE
+  REPAIR
+  RETIRED
+  LOST
+}
+
+enum AssetCondition {
+  NEW
+  EXCELLENT
+  GOOD
+  FAIR
+  POOR
+  DAMAGED
+}
+
+model Asset {
+  id            Int           @id @default(autoincrement())
+  tenantId      Int
+  name          String
+  assetCode     String        // Unique per tenant
+  category      AssetCategory @default(OTHER)
+  brand         String?
+  model         String?
+  serialNumber  String?
+  description   String?       @db.Text
+  purchaseDate  DateTime?
+  purchasePrice Float?
+  currency      String        @default("INR")
+  warrantyEnd   DateTime?
+  status        AssetStatus   @default(AVAILABLE)
+  condition     AssetCondition @default(NEW)
+  currentUserId Int?
+  locationId    Int?
+  notes         String?       @db.Text
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relations
+  tenant      Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  currentUser User?             @relation("CurrentAssetHolder", fields: [currentUserId], references: [id], onDelete: SetNull)
+  location    Location?         @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  allocations AssetAllocation[]
+
+  @@unique([tenantId, assetCode])
+  @@index([tenantId])
+  @@index([status])
+  @@index([category])
+  @@index([currentUserId])
+  @@index([locationId])
+  @@map("assets")
+}
+
+model AssetAllocation {
+  id             Int            @id @default(autoincrement())
+  tenantId       Int
+  assetId        Int
+  userId         Int
+  allocatedAt    DateTime       @default(now())
+  allocatedBy    Int            // Who allocated the asset
+  returnedAt     DateTime?
+  returnedBy     Int?           // Who processed the return
+  expectedReturn DateTime?      // Expected return date
+  conditionOut   AssetCondition @default(GOOD) // Condition when allocated
+  conditionIn    AssetCondition? // Condition when returned
+  notes          String?        @db.Text
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  // Relations
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  asset     Asset  @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  user      User   @relation("AssetAllocations", fields: [userId], references: [id], onDelete: Cascade)
+  allocator User   @relation("AssetAllocator", fields: [allocatedBy], references: [id], onDelete: Cascade)
+  returner  User?  @relation("AssetReturner", fields: [returnedBy], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([assetId])
+  @@index([userId])
+  @@index([allocatedAt])
+  @@map("asset_allocations")
+}
+
+// ==================== DOCUMENT MANAGEMENT ====================
+
+enum DocumentType {
+  POLICY
+  TEMPLATE
+  CONTRACT
+  CERTIFICATE
+  HANDBOOK
+  FORM
+  GUIDE
+  OTHER
+}
+
+enum EmployeeDocumentType {
+  RESUME
+  ID_PROOF
+  ADDRESS_PROOF
+  CERTIFICATE
+  EDUCATION
+  PAN_CARD
+  AADHAR_CARD
+  PASSPORT
+  BANK_DETAILS
+  OFFER_LETTER
+  APPOINTMENT_LETTER
+  RELIEVING_LETTER
+  PAYSLIP
+  TAX_FORM
+  OTHER
+}
+
+model Document {
+  id          Int          @id @default(autoincrement())
+  tenantId    Int
+  name        String       @db.VarChar(255)
+  type        DocumentType
+  category    String       @db.VarChar(100) // Folder/category name
+  description String?      @db.Text
+  fileUrl     String       @db.VarChar(500)
+  fileName    String       @db.VarChar(255) // Original file name
+  fileSize    Int          // Size in bytes
+  mimeType    String       @db.VarChar(100)
+  uploadedBy  Int
+  isPublic    Boolean      @default(false) // Visible to all employees
+  version     Int          @default(1)
+  parentId    Int?         // For versioning - points to previous version
+  isActive    Boolean      @default(true)
+  tags        String?      @db.Text // JSON array of tags
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Relations
+  tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  uploader   User      @relation("DocumentUploader", fields: [uploadedBy], references: [id], onDelete: Cascade)
+  parent     Document? @relation("DocumentVersions", fields: [parentId], references: [id])
+  versions   Document[] @relation("DocumentVersions")
+
+  @@index([tenantId])
+  @@index([tenantId, type])
+  @@index([tenantId, category])
+  @@index([tenantId, isPublic])
+  @@index([uploadedBy])
+  @@map("documents")
+}
+
+model EmployeeDocument {
+  id           Int                  @id @default(autoincrement())
+  tenantId     Int
+  userId       Int
+  documentType EmployeeDocumentType
+  name         String               @db.VarChar(255)
+  description  String?              @db.Text
+  fileUrl      String               @db.VarChar(500)
+  fileName     String               @db.VarChar(255)
+  fileSize     Int
+  mimeType     String               @db.VarChar(100)
+  expiryDate   DateTime?            // For documents that expire (ID, passport)
+  issuedDate   DateTime?            // When the document was issued
+  issuer       String?              @db.VarChar(255) // Issuing authority
+  documentNo   String?              @db.VarChar(100) // Document number/ID
+  isVerified   Boolean              @default(false)
+  verifiedBy   Int?
+  verifiedAt   DateTime?
+  isActive     Boolean              @default(true)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  // Relations
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user     User   @relation("EmployeeDocuments", fields: [userId], references: [id], onDelete: Cascade)
+  verifier User?  @relation("DocumentVerifier", fields: [verifiedBy], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([tenantId, documentType])
+  @@index([expiryDate])
+  @@map("employee_documents")
+}
+
+// ==================== HOLIDAY MANAGEMENT ====================
+
+enum WeeklyOffPattern {
+  ALL_SATURDAYS_SUNDAYS       // Sat + Sun off
+  ONLY_SUNDAYS                // Only Sunday off
+  SECOND_FOURTH_SAT_SUNDAYS   // 2nd & 4th Sat + Sun off
+  SECOND_LAST_SAT_SUNDAYS     // 2nd & last Sat + Sun off
+  ALTERNATE_SATURDAYS_SUNDAYS // Alternate Sat + Sun off
+  CUSTOM                      // Custom days defined in customDays
+}
+
+enum HolidayType {
+  FIXED      // Mandatory for all employees
+  OPTIONAL   // Employee can choose (limited quota)
+  RESTRICTED // Specific to certain groups (future enhancement)
+}
+
+model WeeklyOffConfig {
+  id            Int              @id @default(autoincrement())
+  tenantId      Int              @unique
+  pattern       WeeklyOffPattern @default(ALL_SATURDAYS_SUNDAYS)
+  customDays    Json?            // For CUSTOM: [0,6] = Sun, Sat (0=Sun, 1=Mon...6=Sat)
+  effectiveFrom DateTime         @default(now())
+  isActive      Boolean          @default(true)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  // Relations
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("weekly_off_configs")
+}
+
+model Holiday {
+  id          Int         @id @default(autoincrement())
+  tenantId    Int
+  name        String      @db.VarChar(150)
+  date        DateTime    @db.Date
+  type        HolidayType @default(FIXED)
+  description String?     @db.Text
+  isActive    Boolean     @default(true)
+  createdBy   Int
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  tenant             Tenant                     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  creator            User                       @relation("HolidayCreator", fields: [createdBy], references: [id])
+  optionalSelections OptionalHolidaySelection[]
+
+  @@unique([tenantId, date])
+  @@index([tenantId])
+  @@index([tenantId, date])
+  @@index([tenantId, type])
+  @@map("holidays")
+}
+
+model OptionalHolidaySelection {
+  id         Int      @id @default(autoincrement())
+  tenantId   Int
+  holidayId  Int
+  userId     Int
+  year       Int
+  status     String   @default("SELECTED") @db.VarChar(20) // SELECTED, CANCELLED
+  selectedAt DateTime @default(now())
+
+  // Relations
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  holiday Holiday @relation(fields: [holidayId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, holidayId, userId, year])
+  @@index([tenantId, userId, year])
+  @@map("optional_holiday_selections")
+}
+
+model OptionalHolidayQuota {
+  id          Int      @id @default(autoincrement())
+  tenantId    Int
+  year        Int
+  maxOptional Int      @default(3) // Max optional holidays per year
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, year])
+  @@map("optional_holiday_quotas")
 }

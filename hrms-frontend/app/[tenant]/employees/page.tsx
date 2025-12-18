@@ -397,8 +397,8 @@ export default function EmployeesPage() {
     <DashboardLayout title="Employees">
       <div className="space-y-6">
         {/* Header Actions */}
-        <div className="flex justify-between items-center">
-          <div className="relative w-96">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="relative w-full sm:w-96">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Search by name, email, or employee code..."
@@ -410,25 +410,25 @@ export default function EmployeesPage() {
               className="pl-10"
             />
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleDownloadTemplate}>
-              <FileDown className="h-4 w-4 mr-2" />
-              Template
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+            <Button variant="outline" onClick={handleDownloadTemplate} className="flex-1 sm:flex-none">
+              <FileDown className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Template</span>
             </Button>
-            <Button variant="outline" onClick={() => setShowImportModal(true)}>
-              <Upload className="h-4 w-4 mr-2" />
-              Import
+            <Button variant="outline" onClick={() => setShowImportModal(true)} className="flex-1 sm:flex-none">
+              <Upload className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Import</span>
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" disabled={exporting}>
+                <Button variant="outline" disabled={exporting} className="flex-1 sm:flex-none">
                   {exporting ? (
-                    <Spinner size="sm" className="mr-2" />
+                    <Spinner size="sm" className="sm:mr-2" />
                   ) : (
-                    <Download className="h-4 w-4 mr-2" />
+                    <Download className="h-4 w-4 sm:mr-2" />
                   )}
-                  {exporting ? 'Exporting...' : 'Export'}
-                  <ChevronDown className="h-4 w-4 ml-2" />
+                  <span className="hidden sm:inline">{exporting ? 'Exporting...' : 'Export'}</span>
+                  <ChevronDown className="h-4 w-4 ml-1 sm:ml-2" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -448,15 +448,15 @@ export default function EmployeesPage() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button onClick={() => setShowCreateModal(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Employee
+            <Button onClick={() => setShowCreateModal(true)} className="flex-1 sm:flex-none">
+              <Plus className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Add Employee</span>
             </Button>
           </div>
         </div>
 
-        {/* Employee Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        {/* Employee Table - Desktop */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/50 overflow-hidden hidden md:block">
           <div className="overflow-x-auto">
             <Table>
             <TableHeader>
@@ -473,13 +473,13 @@ export default function EmployeesPage() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
+                  <TableCell colSpan={7} className="text-center py-8 dark:text-gray-400">
                     Loading...
                   </TableCell>
                 </TableRow>
               ) : employees.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={7} className="text-center py-8 text-gray-500 dark:text-gray-400">
                     No employees found
                   </TableCell>
                 </TableRow>
@@ -489,7 +489,7 @@ export default function EmployeesPage() {
                     <TableCell className="font-medium">{employee.employeeCode || '-'}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden flex-shrink-0">
                           {getAvatarUrl(employee.avatar) ? (
                             <img
                               src={getAvatarUrl(employee.avatar)!}
@@ -497,7 +497,7 @@ export default function EmployeesPage() {
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <span className="text-xs font-medium text-gray-500">
+                            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
                               {getInitials(employee.firstName, employee.lastName, employee.email)}
                             </span>
                           )}
@@ -507,7 +507,7 @@ export default function EmployeesPage() {
                     </TableCell>
                     <TableCell>{employee.email}</TableCell>
                     <TableCell>
-                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                      <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-2 py-1 rounded">
                         {employee.role.name}
                       </span>
                     </TableCell>
@@ -516,8 +516,8 @@ export default function EmployeesPage() {
                       <span
                         className={`text-xs px-2 py-1 rounded ${
                           employee.isActive
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                            : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
                         }`}
                       >
                         {employee.isActive ? 'Active' : 'Inactive'}
@@ -541,7 +541,7 @@ export default function EmployeesPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => openDeleteDialog(employee.id)}
-                          className="text-red-600 hover:text-red-700"
+                          className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -556,8 +556,8 @@ export default function EmployeesPage() {
 
           {/* Pagination */}
           {total > 20 && (
-            <div className="flex justify-between items-center p-4 border-t">
-              <p className="text-sm text-gray-600">
+            <div className="flex justify-between items-center p-4 border-t dark:border-gray-700">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 Showing {(page - 1) * 20 + 1} to {Math.min(page * 20, total)} of {total} employees
               </p>
               <div className="flex gap-2">
@@ -579,6 +579,123 @@ export default function EmployeesPage() {
                 </Button>
               </div>
             </div>
+          )}
+        </div>
+
+        {/* Employee Cards - Mobile */}
+        <div className="md:hidden space-y-4">
+          {loading ? (
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">Loading...</div>
+          ) : employees.length === 0 ? (
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">No employees found</div>
+          ) : (
+            <>
+              {employees.map((employee) => (
+                <div
+                  key={employee.id}
+                  className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/50 p-4"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden flex-shrink-0">
+                      {getAvatarUrl(employee.avatar) ? (
+                        <img
+                          src={getAvatarUrl(employee.avatar)!}
+                          alt={`${employee.firstName} ${employee.lastName}`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                          {getInitials(employee.firstName, employee.lastName, employee.email)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-medium text-gray-900 dark:text-white truncate">
+                            {employee.firstName} {employee.lastName}
+                          </h3>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                            {employee.email}
+                          </p>
+                        </div>
+                        <span
+                          className={`text-xs px-2 py-1 rounded flex-shrink-0 ${
+                            employee.isActive
+                              ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                              : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
+                          }`}
+                        >
+                          {employee.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded">
+                          {employee.employeeCode || 'No Code'}
+                        </span>
+                        <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-2 py-1 rounded">
+                          {employee.role.name}
+                        </span>
+                        {employee.department?.name && (
+                          <span className="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 px-2 py-1 rounded">
+                            {employee.department.name}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-3 pt-3 border-t dark:border-gray-700 flex justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => router.push(`/${tenantSlug}/employees/${employee.id}`)}
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      View
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => openEditModal(employee)}>
+                      <Edit className="h-4 w-4 mr-1" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => openDeleteDialog(employee.id)}
+                      className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              {/* Mobile Pagination */}
+              {total > 20 && (
+                <div className="flex justify-between items-center p-4">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Page {page} of {Math.ceil(total / 20)}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(page - 1)}
+                      disabled={page === 1}
+                    >
+                      Prev
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(page + 1)}
+                      disabled={page * 20 >= total}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -926,7 +1043,7 @@ export default function EmployeesPage() {
                       <div className="max-h-32 overflow-y-auto">
                         <ul className="text-sm text-green-700 space-y-1">
                           {importResult.data.created.slice(0, 10).map((emp, idx) => (
-                            <li key={idx}>{emp.name} ({emp.email})</li>
+                            <li key={idx}>{emp.name as string} ({emp.email as string})</li>
                           ))}
                           {importResult.data.created.length > 10 && (
                             <li className="text-green-600">...and {importResult.data.created.length - 10} more</li>

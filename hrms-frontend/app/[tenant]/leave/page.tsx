@@ -193,28 +193,35 @@ export default function LeavePage() {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      PENDING: 'bg-yellow-100 text-yellow-800',
-      APPROVED: 'bg-green-100 text-green-800',
-      REJECTED: 'bg-red-100 text-red-800',
-      CANCELLED: 'bg-gray-100 text-gray-800',
+      PENDING: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+      APPROVED: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+      REJECTED: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+      CANCELLED: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300',
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return colors[status] || 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300';
   };
 
   return (
     <DashboardLayout title="Leave Management">
       <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight dark:text-white">Leave Management</h1>
+            <p className="text-muted-foreground dark:text-gray-400">
+              View your leave balance and manage leave requests
+            </p>
+          </div>
+          <Button onClick={() => setShowApplyModal(true)} className="w-full sm:w-auto">
+            <Plus className="h-4 w-4 mr-2" />
+            Apply Leave
+          </Button>
+        </div>
+
         {/* Leave Balance Cards */}
         <div>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Leave Balance</h2>
-            <Button onClick={() => setShowApplyModal(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Apply Leave
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <h2 className="text-lg font-semibold mb-4 dark:text-white">Leave Balance</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {loading ? (
               <p className="col-span-4 text-center py-8">Loading...</p>
             ) : balances.length === 0 ? (
@@ -225,27 +232,27 @@ export default function LeavePage() {
               balances.map((balance) => (
                 <Card key={balance.id}>
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium text-gray-600">
+                    <CardTitle className="text-sm font-medium text-muted-foreground dark:text-gray-400">
                       {balance.leaveType?.name}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Total:</span>
-                        <span className="font-medium">{balance.totalDays}</span>
+                        <span className="text-muted-foreground dark:text-gray-400">Total:</span>
+                        <span className="font-medium dark:text-white">{balance.totalDays}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Used:</span>
-                        <span className="font-medium text-red-600">{balance.usedDays}</span>
+                        <span className="text-muted-foreground dark:text-gray-400">Used:</span>
+                        <span className="font-medium text-red-600 dark:text-red-400">{balance.usedDays}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Pending:</span>
-                        <span className="font-medium text-yellow-600">{balance.pendingDays}</span>
+                        <span className="text-muted-foreground dark:text-gray-400">Pending:</span>
+                        <span className="font-medium text-yellow-600 dark:text-yellow-400">{balance.pendingDays}</span>
                       </div>
-                      <div className="flex justify-between text-sm pt-2 border-t">
-                        <span className="text-gray-600">Available:</span>
-                        <span className="font-bold text-green-600">{balance.availableDays}</span>
+                      <div className="flex justify-between text-sm pt-2 border-t dark:border-gray-700">
+                        <span className="text-muted-foreground dark:text-gray-400">Available:</span>
+                        <span className="font-bold text-green-600 dark:text-green-400">{balance.availableDays}</span>
                       </div>
                     </div>
                   </CardContent>
@@ -462,62 +469,123 @@ function LeaveRequestsTable({
   onCancel,
 }: LeaveRequestsTableProps) {
   return (
-    <div className="overflow-x-auto">
-      <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Leave Type</TableHead>
-          <TableHead>From Date</TableHead>
-          <TableHead>To Date</TableHead>
-          <TableHead>Days</TableHead>
-          <TableHead>Reason</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {loading ? (
+    <>
+      {/* Desktop Table */}
+      <div className="overflow-x-auto">
+        <Table className="hidden md:table">
+        <TableHeader>
           <TableRow>
-            <TableCell colSpan={7} className="text-center py-8">
-              Loading...
-            </TableCell>
+            <TableHead>Leave Type</TableHead>
+            <TableHead>From Date</TableHead>
+            <TableHead>To Date</TableHead>
+            <TableHead>Days</TableHead>
+            <TableHead>Reason</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
-        ) : requests.length === 0 ? (
-          <TableRow>
-            <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-              No leave requests found
-            </TableCell>
-          </TableRow>
-        ) : (
-          requests.map((request) => (
-            <TableRow key={request.id}>
-              <TableCell className="font-medium">{request.leaveType?.name}</TableCell>
-              <TableCell>{formatDate(request.fromDate)}</TableCell>
-              <TableCell>{formatDate(request.toDate)}</TableCell>
-              <TableCell>{request.totalDays}</TableCell>
-              <TableCell className="max-w-xs truncate">{request.reason}</TableCell>
-              <TableCell>
-                <span className={`text-xs px-2 py-1 rounded ${getStatusColor(request.status)}`}>
-                  {request.status}
-                </span>
-              </TableCell>
-              <TableCell>
-                {request.status === 'PENDING' && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onCancel(request.id)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
+        </TableHeader>
+        <TableBody>
+          {loading ? (
+            <TableRow>
+              <TableCell colSpan={7} className="text-center py-8">
+                Loading...
               </TableCell>
             </TableRow>
+          ) : requests.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={7} className="text-center py-8 text-muted-foreground dark:text-gray-400">
+                No leave requests found
+              </TableCell>
+            </TableRow>
+          ) : (
+            requests.map((request) => (
+              <TableRow key={request.id}>
+                <TableCell className="font-medium">{request.leaveType?.name}</TableCell>
+                <TableCell>{formatDate(request.fromDate)}</TableCell>
+                <TableCell>{formatDate(request.toDate)}</TableCell>
+                <TableCell>{request.totalDays}</TableCell>
+                <TableCell className="max-w-xs truncate">{request.reason}</TableCell>
+                <TableCell>
+                  <span className={`text-xs px-2 py-1 rounded ${getStatusColor(request.status)}`}>
+                    {request.status}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  {request.status === 'PENDING' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onCancel(request.id)}
+                      className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/30"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-4">
+        {loading ? (
+          <div className="text-center py-8">Loading...</div>
+        ) : requests.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground dark:text-gray-400">
+            No leave requests found
+          </div>
+        ) : (
+          requests.map((request) => (
+            <Card key={request.id}>
+              <CardContent className="pt-6">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-semibold dark:text-white">{request.leaveType?.name}</h3>
+                      <p className="text-sm text-muted-foreground dark:text-gray-400">
+                        {request.totalDays} {request.totalDays === 1 ? 'day' : 'days'}
+                      </p>
+                    </div>
+                    <span className={`text-xs px-2 py-1 rounded ${getStatusColor(request.status)}`}>
+                      {request.status}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 pt-2 border-t dark:border-gray-700">
+                    <div>
+                      <p className="text-sm text-muted-foreground dark:text-gray-400">From</p>
+                      <p className="font-medium dark:text-white">{formatDate(request.fromDate)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground dark:text-gray-400">To</p>
+                      <p className="font-medium dark:text-white">{formatDate(request.toDate)}</p>
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t dark:border-gray-700">
+                    <p className="text-sm text-muted-foreground dark:text-gray-400 mb-1">Reason</p>
+                    <p className="text-sm dark:text-white">{request.reason}</p>
+                  </div>
+                  {request.status === 'PENDING' && (
+                    <div className="pt-2 border-t dark:border-gray-700">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onCancel(request.id)}
+                        className="w-full text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/30"
+                      >
+                        <X className="h-4 w-4 mr-2" />
+                        Cancel Request
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           ))
         )}
-      </TableBody>
-    </Table>
-    </div>
+      </div>
+    </>
   );
 }

@@ -8,7 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { tenantApi, TenantUser } from '@/lib/api';
-import { User, Lock, Building2, Bell, Camera, Trash2 } from 'lucide-react';
+import { User, Lock, Building2, Bell, Camera, Trash2, Shield, Users, MapPin, Briefcase, Calendar, ChevronRight, History, IndianRupee, Mail } from 'lucide-react';
+import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { Spinner } from '@/components/ui/spinner';
 
@@ -16,6 +18,8 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9000';
 
 export default function SettingsPage() {
   const { toast } = useToast();
+  const params = useParams();
+  const tenantSlug = params.tenant as string;
   const [user, setUser] = useState<TenantUser | null>(null);
   const [tenantInfo, setTenantInfo] = useState<{ name: string; logo?: string } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -267,6 +271,10 @@ export default function SettingsPage() {
               <Bell className="h-4 w-4" />
               Notifications
             </TabsTrigger>
+            <TabsTrigger value="admin" className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Admin
+            </TabsTrigger>
           </TabsList>
 
           {/* Profile Tab */}
@@ -284,7 +292,7 @@ export default function SettingsPage() {
                   {/* Avatar Preview */}
                   <div className="relative">
                     <div
-                      className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+                      className="w-24 h-24 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
                       onClick={handleAvatarClick}
                     >
                       {uploadingAvatar ? (
@@ -296,7 +304,7 @@ export default function SettingsPage() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <span className="text-2xl font-semibold text-gray-500">
+                        <span className="text-2xl font-semibold text-gray-500 dark:text-gray-400">
                           {getInitials()}
                         </span>
                       )}
@@ -332,14 +340,14 @@ export default function SettingsPage() {
                           size="sm"
                           onClick={handleDeleteAvatar}
                           disabled={uploadingAvatar}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20"
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
                           Remove
                         </Button>
                       )}
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       Accepted formats: JPEG, PNG, GIF, WebP. Max size: 2MB.
                     </p>
                   </div>
@@ -397,9 +405,9 @@ export default function SettingsPage() {
                       type="email"
                       value={user?.email || ''}
                       disabled
-                      className="bg-gray-50"
+                      className="bg-gray-50 dark:bg-gray-700"
                     />
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       Contact your administrator to change your email address.
                     </p>
                   </div>
@@ -422,7 +430,7 @@ export default function SettingsPage() {
                     <Input
                       value={user?.employeeCode || '-'}
                       disabled
-                      className="bg-gray-50"
+                      className="bg-gray-50 dark:bg-gray-700"
                     />
                   </div>
 
@@ -432,7 +440,7 @@ export default function SettingsPage() {
                       <Input
                         value={user?.role?.name || '-'}
                         disabled
-                        className="bg-gray-50"
+                        className="bg-gray-50 dark:bg-gray-700"
                       />
                     </div>
                     <div className="space-y-2">
@@ -440,7 +448,7 @@ export default function SettingsPage() {
                       <Input
                         value={user?.department?.name || '-'}
                         disabled
-                        className="bg-gray-50"
+                        className="bg-gray-50 dark:bg-gray-700"
                       />
                     </div>
                   </div>
@@ -494,7 +502,7 @@ export default function SettingsPage() {
                       required
                       minLength={8}
                     />
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       Password must be at least 8 characters long.
                     </p>
                   </div>
@@ -540,12 +548,12 @@ export default function SettingsPage() {
                     <Input
                       value={tenantInfo?.name || '-'}
                       disabled
-                      className="bg-gray-50"
+                      className="bg-gray-50 dark:bg-gray-700"
                     />
                   </div>
 
-                  <div className="p-4 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-blue-800">
+                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <p className="text-sm text-blue-800 dark:text-blue-300">
                       Contact your administrator to update organization settings.
                     </p>
                   </div>
@@ -565,55 +573,238 @@ export default function SettingsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center justify-between p-4 border dark:border-gray-700 rounded-lg">
                     <div>
-                      <p className="font-medium">Email Notifications</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="font-medium dark:text-white">Email Notifications</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         Receive email notifications for important updates.
                       </p>
                     </div>
                     <input
                       type="checkbox"
                       defaultChecked
-                      className="h-4 w-4 rounded border-gray-300"
+                      className="h-4 w-4 rounded border-gray-300 dark:border-gray-600"
                     />
                   </div>
 
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center justify-between p-4 border dark:border-gray-700 rounded-lg">
                     <div>
-                      <p className="font-medium">Leave Request Updates</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="font-medium dark:text-white">Leave Request Updates</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         Get notified when your leave requests are approved or rejected.
                       </p>
                     </div>
                     <input
                       type="checkbox"
                       defaultChecked
-                      className="h-4 w-4 rounded border-gray-300"
+                      className="h-4 w-4 rounded border-gray-300 dark:border-gray-600"
                     />
                   </div>
 
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center justify-between p-4 border dark:border-gray-700 rounded-lg">
                     <div>
-                      <p className="font-medium">Attendance Reminders</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="font-medium dark:text-white">Attendance Reminders</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         Receive daily reminders to clock in/out.
                       </p>
                     </div>
                     <input
                       type="checkbox"
-                      className="h-4 w-4 rounded border-gray-300"
+                      className="h-4 w-4 rounded border-gray-300 dark:border-gray-600"
                     />
                   </div>
 
-                  <div className="p-4 bg-yellow-50 rounded-lg">
-                    <p className="text-sm text-yellow-800">
+                  <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                    <p className="text-sm text-yellow-800 dark:text-yellow-300">
                       Note: Notification preferences will be saved automatically. Some notifications may be required by your organization.
                     </p>
                   </div>
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Admin Tab */}
+          <TabsContent value="admin" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Organization Settings</CardTitle>
+                <CardDescription>
+                  Manage organizational structure, roles, and policies.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Link
+                    href={`/${tenantSlug}/settings/departments`}
+                    className="flex items-center justify-between p-4 border dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                        <Building2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="font-medium dark:text-white">Departments</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Manage department hierarchy
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
+                  </Link>
+
+                  <Link
+                    href={`/${tenantSlug}/settings/designations`}
+                    className="flex items-center justify-between p-4 border dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                        <Briefcase className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <div>
+                        <p className="font-medium dark:text-white">Designations</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Manage job titles and grades
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
+                  </Link>
+
+                  <Link
+                    href={`/${tenantSlug}/settings/locations`}
+                    className="flex items-center justify-between p-4 border dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                        <MapPin className="h-5 w-5 text-green-600 dark:text-green-400" />
+                      </div>
+                      <div>
+                        <p className="font-medium dark:text-white">Locations</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Manage office locations
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
+                  </Link>
+
+                  <Link
+                    href={`/${tenantSlug}/settings/roles`}
+                    className="flex items-center justify-between p-4 border dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                        <Shield className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                      </div>
+                      <div>
+                        <p className="font-medium dark:text-white">Roles & Permissions</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Manage user roles and access
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
+                  </Link>
+
+                  <Link
+                    href={`/${tenantSlug}/settings/leave-types`}
+                    className="flex items-center justify-between p-4 border dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-teal-100 dark:bg-teal-900/30 rounded-lg">
+                        <Calendar className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+                      </div>
+                      <div>
+                        <p className="font-medium dark:text-white">Leave Types</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Configure leave policies
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
+                  </Link>
+
+                  <Link
+                    href={`/${tenantSlug}/settings/payroll/salary-components`}
+                    className="flex items-center justify-between p-4 border dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                        <IndianRupee className="h-5 w-5 text-green-600 dark:text-green-400" />
+                      </div>
+                      <div>
+                        <p className="font-medium dark:text-white">Salary Components</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Configure earnings, deductions & reimbursements
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
+                  </Link>
+
+                  <Link
+                    href={`/${tenantSlug}/settings/payroll/tax-slabs`}
+                    className="flex items-center justify-between p-4 border dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+                        <IndianRupee className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                      </div>
+                      <div>
+                        <p className="font-medium dark:text-white">Tax Slabs</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Configure Indian tax regimes & slabs
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
+                  </Link>
+
+                  <Link
+                    href={`/${tenantSlug}/settings/audit-logs`}
+                    className="flex items-center justify-between p-4 border dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                        <History className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                      </div>
+                      <div>
+                        <p className="font-medium dark:text-white">Audit Logs</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          View activity history
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
+                  </Link>
+
+                  <Link
+                    href={`/${tenantSlug}/settings/email-preferences`}
+                    className="flex items-center justify-between p-4 border dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                        <Mail className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="font-medium dark:text-white">Email Preferences</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Configure email notification settings
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <p className="text-sm text-blue-800 dark:text-blue-300">
+                These settings affect the entire organization. Changes will be visible to all users based on their permissions.
+              </p>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

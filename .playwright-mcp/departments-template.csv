@@ -1,0 +1,6 @@
+code,name,parent_code,description,is_active
+TECH,Technology,,Technology Department,true
+ENG,Engineering,TECH,Engineering Team,true
+FE,Frontend,ENG,Frontend Development,true
+BE,Backend,ENG,Backend Development,true
+HR,Human Resources,,HR Department,true
