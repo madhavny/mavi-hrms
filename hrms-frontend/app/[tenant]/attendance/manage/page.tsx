@@ -198,16 +198,18 @@ export default function AttendanceManagePage() {
     }));
 
     try {
-      const result = await tenantApi.bulkMarkAttendance(records);
-      setBulkResult(result);
-      toast({
-        title: result.data.failed === 0 ? 'Attendance Marked' : 'Marking Completed with Errors',
-        description: result.message,
-        variant: result.data.failed === 0 ? 'default' : 'destructive',
-      });
+      const response = await tenantApi.bulkMarkAttendance(records);
+      if (response.data) {
+        setBulkResult(response.data);
+        toast({
+          title: response.data.failed === 0 ? 'Attendance Marked' : 'Marking Completed with Errors',
+          description: response.message,
+          variant: response.data.failed === 0 ? 'default' : 'destructive',
+        });
 
-      if (result.data.successful > 0) {
-        setSelectedEmployees([]);
+        if (response.data.successful > 0) {
+          setSelectedEmployees([]);
+        }
       }
     } catch (err: unknown) {
       toast({
@@ -234,9 +236,9 @@ export default function AttendanceManagePage() {
     <DashboardLayout title="Attendance Management">
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-center">
-          <div className="flex gap-4">
-            <div className="relative w-64">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row gap-4 flex-1">
+            <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 placeholder="Search employees..."
@@ -246,7 +248,7 @@ export default function AttendanceManagePage() {
               />
             </div>
             <Select value={departmentFilter || "all"} onValueChange={(val) => setDepartmentFilter(val === "all" ? "" : val)}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder="All Departments" />
               </SelectTrigger>
               <SelectContent>
@@ -262,7 +264,7 @@ export default function AttendanceManagePage() {
           <div className="flex gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" disabled={exporting}>
+                <Button variant="outline" disabled={exporting} className="w-full sm:w-auto">
                   {exporting ? (
                     <Spinner size="sm" className="mr-2" />
                   ) : (
@@ -278,7 +280,7 @@ export default function AttendanceManagePage() {
                 <div className="p-2 space-y-2">
                   <div className="flex gap-2">
                     <div className="flex-1">
-                      <Label className="text-xs text-gray-500">From</Label>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400">From</Label>
                       <Input
                         type="date"
                         value={exportStartDate}
@@ -287,7 +289,7 @@ export default function AttendanceManagePage() {
                       />
                     </div>
                     <div className="flex-1">
-                      <Label className="text-xs text-gray-500">To</Label>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400">To</Label>
                       <Input
                         type="date"
                         value={exportEndDate}
@@ -311,6 +313,7 @@ export default function AttendanceManagePage() {
             <Button
               onClick={openBulkModal}
               disabled={selectedEmployees.length === 0}
+              className="w-full sm:w-auto"
             >
               <Calendar className="h-4 w-4 mr-2" />
               Mark Attendance ({selectedEmployees.length})
@@ -321,13 +324,14 @@ export default function AttendanceManagePage() {
         {/* Employee Selection */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 dark:text-white">
               <Users className="h-5 w-5" />
               Select Employees
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -345,13 +349,13 @@ export default function AttendanceManagePage() {
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center py-8">
+                      <TableCell colSpan={4} className="text-center py-8 dark:text-gray-400">
                         Loading...
                       </TableCell>
                     </TableRow>
                   ) : employees.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                      <TableCell colSpan={4} className="text-center py-8 text-gray-500 dark:text-gray-400">
                         No employees found
                       </TableCell>
                     </TableRow>
@@ -364,16 +368,62 @@ export default function AttendanceManagePage() {
                             onCheckedChange={() => toggleEmployee(employee.id)}
                           />
                         </TableCell>
-                        <TableCell className="font-medium">
+                        <TableCell className="font-medium dark:text-white">
                           {employee.employeeCode || '-'}
                         </TableCell>
-                        <TableCell>{employee.name}</TableCell>
-                        <TableCell>{employee.department || '-'}</TableCell>
+                        <TableCell className="dark:text-white">{employee.name}</TableCell>
+                        <TableCell className="dark:text-white">{employee.department || '-'}</TableCell>
                       </TableRow>
                     ))
                   )}
                 </TableBody>
               </Table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-3">
+              {loading ? (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  Loading...
+                </div>
+              ) : employees.length === 0 ? (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  No employees found
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-900/30 rounded-lg border dark:border-gray-700">
+                    <Checkbox
+                      checked={employees.length > 0 && selectedEmployees.length === employees.length}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                    <span className="text-sm font-medium dark:text-white">
+                      Select All ({selectedEmployees.length}/{employees.length})
+                    </span>
+                  </div>
+                  {employees.map((employee) => (
+                    <div
+                      key={employee.id}
+                      className="flex items-start gap-3 p-3 border dark:border-gray-700 rounded-lg"
+                    >
+                      <Checkbox
+                        checked={selectedEmployees.includes(employee.id)}
+                        onCheckedChange={() => toggleEmployee(employee.id)}
+                        className="mt-1"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium dark:text-white">{employee.name}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {employee.employeeCode || '-'}
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {employee.department || '-'}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -453,29 +503,29 @@ export default function AttendanceManagePage() {
               {bulkResult && (
                 <div className="space-y-3">
                   <div className="grid grid-cols-3 gap-4">
-                    <div className="p-3 bg-gray-50 rounded-lg text-center">
-                      <p className="text-xl font-bold">{bulkResult.data.total}</p>
-                      <p className="text-xs text-gray-500">Total</p>
+                    <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg text-center">
+                      <p className="text-xl font-bold dark:text-white">{bulkResult.total}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Total</p>
                     </div>
-                    <div className="p-3 bg-green-50 rounded-lg text-center">
-                      <p className="text-xl font-bold text-green-600">{bulkResult.data.successful}</p>
-                      <p className="text-xs text-green-600">Success</p>
+                    <div className="p-3 bg-green-50 dark:bg-green-900/30 rounded-lg text-center">
+                      <p className="text-xl font-bold text-green-600 dark:text-green-400">{bulkResult.successful}</p>
+                      <p className="text-xs text-green-600 dark:text-green-400">Success</p>
                     </div>
-                    <div className="p-3 bg-red-50 rounded-lg text-center">
-                      <p className="text-xl font-bold text-red-600">{bulkResult.data.failed}</p>
-                      <p className="text-xs text-red-600">Failed</p>
+                    <div className="p-3 bg-red-50 dark:bg-red-900/30 rounded-lg text-center">
+                      <p className="text-xl font-bold text-red-600 dark:text-red-400">{bulkResult.failed}</p>
+                      <p className="text-xs text-red-600 dark:text-red-400">Failed</p>
                     </div>
                   </div>
 
-                  {bulkResult.data.errors.length > 0 && (
-                    <div className="p-3 bg-red-50 rounded-lg">
+                  {bulkResult.errors.length > 0 && (
+                    <div className="p-3 bg-red-50 dark:bg-red-900/30 rounded-lg">
                       <div className="flex items-center gap-2 mb-2">
-                        <AlertCircle className="h-4 w-4 text-red-600" />
-                        <span className="font-medium text-red-800">Errors</span>
+                        <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                        <span className="font-medium text-red-800 dark:text-red-300">Errors</span>
                       </div>
                       <div className="max-h-32 overflow-y-auto">
-                        <ul className="text-sm text-red-700 space-y-1">
-                          {bulkResult.data.errors.map((error, idx) => (
+                        <ul className="text-sm text-red-700 dark:text-red-300 space-y-1">
+                          {bulkResult.errors.map((error, idx) => (
                             <li key={idx}>{error}</li>
                           ))}
                         </ul>

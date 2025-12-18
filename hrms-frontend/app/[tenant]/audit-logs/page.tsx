@@ -43,20 +43,20 @@ import {
 } from 'lucide-react';
 
 const ACTION_COLORS: Record<string, string> = {
-  CREATE: 'bg-green-100 text-green-800',
-  UPDATE: 'bg-blue-100 text-blue-800',
-  DELETE: 'bg-red-100 text-red-800',
-  LOGIN: 'bg-purple-100 text-purple-800',
-  LOGOUT: 'bg-gray-100 text-gray-800',
-  LOGIN_FAILED: 'bg-orange-100 text-orange-800',
-  PASSWORD_CHANGE: 'bg-yellow-100 text-yellow-800',
-  CLOCK_IN: 'bg-teal-100 text-teal-800',
-  CLOCK_OUT: 'bg-cyan-100 text-cyan-800',
-  LEAVE_APPLY: 'bg-indigo-100 text-indigo-800',
-  LEAVE_APPROVE: 'bg-green-100 text-green-800',
-  LEAVE_REJECT: 'bg-red-100 text-red-800',
-  LEAVE_CANCEL: 'bg-gray-100 text-gray-800',
-  STATUS_CHANGE: 'bg-amber-100 text-amber-800',
+  CREATE: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+  UPDATE: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+  DELETE: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+  LOGIN: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+  LOGOUT: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+  LOGIN_FAILED: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+  PASSWORD_CHANGE: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+  CLOCK_IN: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300',
+  CLOCK_OUT: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300',
+  LEAVE_APPLY: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
+  LEAVE_APPROVE: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+  LEAVE_REJECT: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+  LEAVE_CANCEL: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+  STATUS_CHANGE: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
 };
 
 const ACTIONS = [
@@ -197,10 +197,10 @@ export default function AuditLogsPage() {
       <div className="space-y-2">
         {Object.entries(changes).map(([field, { from, to }]) => (
           <div key={field} className="text-sm">
-            <span className="font-medium">{field}:</span>
-            <div className="ml-4 text-gray-600">
-              <div className="text-red-600">- {JSON.stringify(from)}</div>
-              <div className="text-green-600">+ {JSON.stringify(to)}</div>
+            <span className="font-medium dark:text-white">{field}:</span>
+            <div className="ml-4 text-gray-600 dark:text-gray-400">
+              <div className="text-red-600 dark:text-red-400">- {JSON.stringify(from)}</div>
+              <div className="text-green-600 dark:text-green-400">+ {JSON.stringify(to)}</div>
             </div>
           </div>
         ))}
@@ -218,10 +218,12 @@ export default function AuditLogsPage() {
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600">Total Logs</p>
-                    <p className="text-2xl font-bold">{total}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Total Logs</p>
+                    <p className="text-2xl font-bold dark:text-white">{total}</p>
                   </div>
-                  <Activity className="h-8 w-8 text-blue-500" />
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                    <Activity className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -229,10 +231,12 @@ export default function AuditLogsPage() {
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600">Entities Tracked</p>
-                    <p className="text-2xl font-bold">{stats.byEntity.length}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Entities Tracked</p>
+                    <p className="text-2xl font-bold dark:text-white">{stats.byEntity.length}</p>
                   </div>
-                  <FileText className="h-8 w-8 text-green-500" />
+                  <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                    <FileText className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -240,10 +244,12 @@ export default function AuditLogsPage() {
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600">Action Types</p>
-                    <p className="text-2xl font-bold">{stats.byAction.length}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Action Types</p>
+                    <p className="text-2xl font-bold dark:text-white">{stats.byAction.length}</p>
                   </div>
-                  <Users className="h-8 w-8 text-purple-500" />
+                  <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                    <Users className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -251,12 +257,14 @@ export default function AuditLogsPage() {
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600">Recent Activity</p>
-                    <p className="text-2xl font-bold">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Recent Activity</p>
+                    <p className="text-2xl font-bold dark:text-white">
                       {stats.recentActivity.reduce((sum, r) => sum + r.count, 0)}
                     </p>
                   </div>
-                  <Clock className="h-8 w-8 text-orange-500" />
+                  <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                    <Clock className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -374,26 +382,26 @@ export default function AuditLogsPage() {
                     </TableRow>
                   ) : logs.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                      <TableCell colSpan={7} className="text-center py-8 text-gray-500 dark:text-gray-400">
                         No audit logs found
                       </TableCell>
                     </TableRow>
                   ) : (
                     logs.map((log) => (
                       <TableRow key={log.id}>
-                        <TableCell className="whitespace-nowrap">
+                        <TableCell className="whitespace-nowrap dark:text-white">
                           {formatDate(log.createdAt)}
                         </TableCell>
                         <TableCell>
                           <div>
-                            <p className="font-medium text-sm">{log.userEmail || 'System'}</p>
-                            <p className="text-xs text-gray-500">{log.userType}</p>
+                            <p className="font-medium text-sm dark:text-white">{log.userEmail || 'System'}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{log.userType}</p>
                           </div>
                         </TableCell>
                         <TableCell>
                           <span
                             className={`px-2 py-1 rounded text-xs font-medium ${
-                              ACTION_COLORS[log.action] || 'bg-gray-100 text-gray-800'
+                              ACTION_COLORS[log.action] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                             }`}
                           >
                             {log.action.replace(/_/g, ' ')}
@@ -401,16 +409,16 @@ export default function AuditLogsPage() {
                         </TableCell>
                         <TableCell>
                           <div>
-                            <p className="font-medium text-sm">{log.entity}</p>
+                            <p className="font-medium text-sm dark:text-white">{log.entity}</p>
                             {log.entityId && (
-                              <p className="text-xs text-gray-500">ID: {log.entityId}</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">ID: {log.entityId}</p>
                             )}
                           </div>
                         </TableCell>
-                        <TableCell className="max-w-[200px] truncate">
+                        <TableCell className="max-w-[200px] truncate dark:text-white">
                           {log.entityName || '-'}
                         </TableCell>
-                        <TableCell className="text-sm text-gray-600">
+                        <TableCell className="text-sm text-gray-600 dark:text-gray-400">
                           {log.ipAddress || '-'}
                         </TableCell>
                         <TableCell>
@@ -432,7 +440,7 @@ export default function AuditLogsPage() {
             {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex items-center justify-between mt-4">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   Showing {(page - 1) * 20 + 1} to {Math.min(page * 20, total)} of {total} logs
                 </p>
                 <div className="flex gap-2">
@@ -444,7 +452,7 @@ export default function AuditLogsPage() {
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
-                  <span className="flex items-center px-3 text-sm">
+                  <span className="flex items-center px-3 text-sm dark:text-white">
                     Page {page} of {totalPages}
                   </span>
                   <Button
@@ -479,49 +487,49 @@ export default function AuditLogsPage() {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-gray-500">Timestamp</p>
-                    <p className="font-medium">{formatDate(selectedLog.createdAt)}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Timestamp</p>
+                    <p className="font-medium dark:text-white">{formatDate(selectedLog.createdAt)}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Action</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Action</p>
                     <span
                       className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                        ACTION_COLORS[selectedLog.action] || 'bg-gray-100 text-gray-800'
+                        ACTION_COLORS[selectedLog.action] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                       }`}
                     >
                       {selectedLog.action.replace(/_/g, ' ')}
                     </span>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">User</p>
-                    <p className="font-medium">{selectedLog.userEmail || 'System'}</p>
-                    <p className="text-xs text-gray-500">{selectedLog.userType}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">User</p>
+                    <p className="font-medium dark:text-white">{selectedLog.userEmail || 'System'}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{selectedLog.userType}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Entity</p>
-                    <p className="font-medium">{selectedLog.entity}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Entity</p>
+                    <p className="font-medium dark:text-white">{selectedLog.entity}</p>
                     {selectedLog.entityId && (
-                      <p className="text-xs text-gray-500">ID: {selectedLog.entityId}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">ID: {selectedLog.entityId}</p>
                     )}
                   </div>
                   {selectedLog.entityName && (
                     <div className="col-span-2">
-                      <p className="text-sm text-gray-500">Entity Name</p>
-                      <p className="font-medium">{selectedLog.entityName}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Entity Name</p>
+                      <p className="font-medium dark:text-white">{selectedLog.entityName}</p>
                     </div>
                   )}
                   {selectedLog.ipAddress && (
                     <div>
-                      <p className="text-sm text-gray-500">IP Address</p>
-                      <p className="font-medium">{selectedLog.ipAddress}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">IP Address</p>
+                      <p className="font-medium dark:text-white">{selectedLog.ipAddress}</p>
                     </div>
                   )}
                 </div>
 
                 {selectedLog.changes && Object.keys(selectedLog.changes).length > 0 && (
                   <div>
-                    <p className="text-sm text-gray-500 mb-2">Changes</p>
-                    <div className="bg-gray-50 rounded-lg p-4">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Changes</p>
+                    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
                       {renderChanges(selectedLog.changes)}
                     </div>
                   </div>
@@ -529,8 +537,8 @@ export default function AuditLogsPage() {
 
                 {selectedLog.oldValue && (
                   <div>
-                    <p className="text-sm text-gray-500 mb-2">Previous Value</p>
-                    <pre className="bg-gray-50 rounded-lg p-4 text-xs overflow-x-auto">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Previous Value</p>
+                    <pre className="bg-gray-50 dark:bg-gray-800 dark:text-gray-300 rounded-lg p-4 text-xs overflow-x-auto">
                       {JSON.stringify(selectedLog.oldValue, null, 2)}
                     </pre>
                   </div>
@@ -538,8 +546,8 @@ export default function AuditLogsPage() {
 
                 {selectedLog.newValue && (
                   <div>
-                    <p className="text-sm text-gray-500 mb-2">New Value</p>
-                    <pre className="bg-gray-50 rounded-lg p-4 text-xs overflow-x-auto">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">New Value</p>
+                    <pre className="bg-gray-50 dark:bg-gray-800 dark:text-gray-300 rounded-lg p-4 text-xs overflow-x-auto">
                       {JSON.stringify(selectedLog.newValue, null, 2)}
                     </pre>
                   </div>
@@ -547,8 +555,8 @@ export default function AuditLogsPage() {
 
                 {selectedLog.userAgent && (
                   <div>
-                    <p className="text-sm text-gray-500">User Agent</p>
-                    <p className="text-xs text-gray-600 break-all">{selectedLog.userAgent}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">User Agent</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 break-all">{selectedLog.userAgent}</p>
                   </div>
                 )}
               </div>

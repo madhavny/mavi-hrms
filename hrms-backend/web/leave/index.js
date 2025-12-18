@@ -1,5 +1,7 @@
 import prisma from '@shared/config/database.js';
 import { auditLeaveApply, auditLeaveApprove, auditLeaveReject, auditLeaveCancel, auditCreate, auditUpdate, auditDelete } from '@shared/utilities/audit.js';
+import { notifyLeaveRequested, notifyLeaveApproved, notifyLeaveRejected } from '../tenant/notifications.js';
+import { calculateWorkingDays } from '../tenant/holidays.js';
 
 // ==================== LEAVE TYPES ====================
 
@@ -175,10 +177,45 @@ export const allocateLeaveBalance = async (req, res) => {
 
 // Apply for Leave (All employees)
 export const applyLeave = async (req, res) => {
-  const { leaveTypeId, fromDate, toDate, totalDays, reason, documentUrl, appliedTo } = req.body;
+  const { leaveTypeId, fromDate, toDate, totalDays: requestedDays, reason, documentUrl, appliedTo } = req.body;
   const userId = req.user.id;
   const tenantId = req.user.tenantId;
   const year = new Date(fromDate).getFullYear();
+
+  // Calculate actual working days excluding holidays and weekly offs
+  let actualWorkingDays = parseFloat(requestedDays);
+  let excludedInfo = null;
+
+  try {
+    const workingDaysResult = await calculateWorkingDays(
+      tenantId,
+      new Date(fromDate),
+      new Date(toDate),
+      userId
+    );
+
+    actualWorkingDays = workingDaysResult.workingDays;
+    excludedInfo = {
+      totalDays: workingDaysResult.totalDays,
+      workingDays: workingDaysResult.workingDays,
+      holidaysExcluded: workingDaysResult.holidayDates.length,
+      weeklyOffsExcluded: workingDaysResult.weeklyOffDates.length,
+      holidays: workingDaysResult.holidays,
+    };
+
+    // If no working days after exclusions, return error
+    if (actualWorkingDays <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No working days in the selected date range (all days are holidays or weekly offs)',
+        excludedInfo
+      });
+    }
+  } catch (error) {
+    // If holiday calculation fails, fall back to requested days
+    console.error('Holiday calculation error:', error);
+    actualWorkingDays = parseFloat(requestedDays);
+  }
 
   // Check leave balance
   const balance = await prisma.leaveBalance.findUnique({
@@ -192,10 +229,11 @@ export const applyLeave = async (req, res) => {
     }
   });
 
-  if (!balance || balance.availableDays < parseFloat(totalDays)) {
+  if (!balance || balance.availableDays < actualWorkingDays) {
     return res.status(400).json({
       success: false,
-      message: 'Insufficient leave balance'
+      message: `Insufficient leave balance. Required: ${actualWorkingDays} days, Available: ${balance?.availableDays || 0} days`,
+      excludedInfo
     });
   }
 
@@ -207,7 +245,7 @@ export const applyLeave = async (req, res) => {
       leaveTypeId: parseInt(leaveTypeId),
       fromDate: new Date(fromDate),
       toDate: new Date(toDate),
-      totalDays: parseFloat(totalDays),
+      totalDays: actualWorkingDays, // Use calculated working days
       reason,
       documentUrl,
       appliedTo: appliedTo ? parseInt(appliedTo) : null,
@@ -223,8 +261,8 @@ export const applyLeave = async (req, res) => {
   await prisma.leaveBalance.update({
     where: { id: balance.id },
     data: {
-      pendingDays: balance.pendingDays + parseFloat(totalDays),
-      availableDays: balance.availableDays - parseFloat(totalDays)
+      pendingDays: balance.pendingDays + actualWorkingDays,
+      availableDays: balance.availableDays - actualWorkingDays
     }
   });
 
@@ -234,14 +272,29 @@ export const applyLeave = async (req, res) => {
     userId,
     userEmail: req.user.email,
     leaveRequestId: leaveRequest.id,
-    data: { leaveTypeId, fromDate, toDate, totalDays, reason },
+    data: { leaveTypeId, fromDate, toDate, totalDays: actualWorkingDays, reason, excludedInfo },
     req
   });
+
+  // Send notifications to managers/HR
+  notifyLeaveRequested({
+    tenantId,
+    employeeId: userId,
+    employeeName: `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim() || req.user.email,
+    leaveType: leaveRequest.leaveType.name,
+    startDate: fromDate,
+    endDate: toDate,
+    days: actualWorkingDays,
+    leaveRequestId: leaveRequest.id,
+  }).catch(console.error); // Don't fail the request if notification fails
 
   return res.status(201).json({
     success: true,
     data: leaveRequest,
-    message: 'Leave request submitted successfully'
+    message: excludedInfo
+      ? `Leave request submitted successfully. ${excludedInfo.holidaysExcluded + excludedInfo.weeklyOffsExcluded} day(s) excluded (holidays/weekly offs).`
+      : 'Leave request submitted successfully',
+    excludedInfo
   });
 };
 
@@ -459,6 +512,8 @@ export const reviewLeaveRequest = async (req, res) => {
   });
 
   // Log leave approval or rejection
+  const approverName = `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim() || req.user.email;
+
   if (status === 'APPROVED') {
     await auditLeaveApprove({
       tenantId,
@@ -469,6 +524,17 @@ export const reviewLeaveRequest = async (req, res) => {
       newData: { status, reviewComments },
       req
     });
+
+    // Notify employee about approval
+    notifyLeaveApproved({
+      tenantId,
+      employeeId: request.userId,
+      leaveType: result.leaveType.name,
+      startDate: request.fromDate,
+      endDate: request.toDate,
+      days: request.totalDays,
+      approverName,
+    }).catch(console.error);
   } else {
     await auditLeaveReject({
       tenantId,
@@ -479,6 +545,18 @@ export const reviewLeaveRequest = async (req, res) => {
       newData: { status, reviewComments },
       req
     });
+
+    // Notify employee about rejection
+    notifyLeaveRejected({
+      tenantId,
+      employeeId: request.userId,
+      leaveType: result.leaveType.name,
+      startDate: request.fromDate,
+      endDate: request.toDate,
+      days: request.totalDays,
+      approverName,
+      reason: reviewComments,
+    }).catch(console.error);
   }
 
   return res.json({
