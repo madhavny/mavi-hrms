@@ -130,38 +130,38 @@ export default function EmployeeDetailPage() {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      PRESENT: 'bg-green-100 text-green-800',
-      ABSENT: 'bg-red-100 text-red-800',
-      HALF_DAY: 'bg-yellow-100 text-yellow-800',
-      LATE: 'bg-orange-100 text-orange-800',
-      ON_LEAVE: 'bg-blue-100 text-blue-800',
-      HOLIDAY: 'bg-purple-100 text-purple-800',
-      WEEKEND: 'bg-gray-100 text-gray-800',
-      PENDING: 'bg-yellow-100 text-yellow-800',
-      APPROVED: 'bg-green-100 text-green-800',
-      REJECTED: 'bg-red-100 text-red-800',
-      CANCELLED: 'bg-gray-100 text-gray-800',
+      PRESENT: 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-400',
+      ABSENT: 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-400',
+      HALF_DAY: 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-400',
+      LATE: 'bg-orange-100 dark:bg-orange-900/50 text-orange-800 dark:text-orange-400',
+      ON_LEAVE: 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-400',
+      HOLIDAY: 'bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-400',
+      WEEKEND: 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300',
+      PENDING: 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-400',
+      APPROVED: 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-400',
+      REJECTED: 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-400',
+      CANCELLED: 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300',
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return colors[status] || 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300';
   };
 
   const getActionColor = (action: string) => {
     const colors: Record<string, string> = {
-      CREATE: 'bg-green-100 text-green-800',
-      UPDATE: 'bg-blue-100 text-blue-800',
-      DELETE: 'bg-red-100 text-red-800',
-      LOGIN: 'bg-purple-100 text-purple-800',
-      LOGOUT: 'bg-gray-100 text-gray-800',
-      LOGIN_FAILED: 'bg-red-100 text-red-800',
-      PASSWORD_CHANGE: 'bg-yellow-100 text-yellow-800',
-      CLOCK_IN: 'bg-green-100 text-green-800',
-      CLOCK_OUT: 'bg-orange-100 text-orange-800',
-      LEAVE_APPLY: 'bg-blue-100 text-blue-800',
-      LEAVE_APPROVE: 'bg-green-100 text-green-800',
-      LEAVE_REJECT: 'bg-red-100 text-red-800',
-      LEAVE_CANCEL: 'bg-gray-100 text-gray-800',
+      CREATE: 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-400',
+      UPDATE: 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-400',
+      DELETE: 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-400',
+      LOGIN: 'bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-400',
+      LOGOUT: 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300',
+      LOGIN_FAILED: 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-400',
+      PASSWORD_CHANGE: 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-400',
+      CLOCK_IN: 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-400',
+      CLOCK_OUT: 'bg-orange-100 dark:bg-orange-900/50 text-orange-800 dark:text-orange-400',
+      LEAVE_APPLY: 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-400',
+      LEAVE_APPROVE: 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-400',
+      LEAVE_REJECT: 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-400',
+      LEAVE_CANCEL: 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300',
     };
-    return colors[action] || 'bg-gray-100 text-gray-800';
+    return colors[action] || 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300';
   };
 
   const formatAction = (action: string) => {
@@ -192,7 +192,7 @@ export default function EmployeeDetailPage() {
     return (
       <DashboardLayout title="Employee Details">
         <div className="text-center py-12">
-          <p className="text-gray-500">Employee not found</p>
+          <p className="text-gray-500 dark:text-gray-400">Employee not found</p>
           <Button
             variant="outline"
             className="mt-4"
@@ -232,22 +232,22 @@ export default function EmployeeDetailPage() {
             <div className="flex flex-col md:flex-row gap-6">
               {/* Avatar */}
               <div className="flex-shrink-0">
-                <div className="h-24 w-24 rounded-full bg-blue-100 flex items-center justify-center">
-                  <User className="h-12 w-12 text-blue-600" />
+                <div className="h-24 w-24 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
+                  <User className="h-12 w-12 text-blue-600 dark:text-blue-400" />
                 </div>
               </div>
 
               {/* Basic Info */}
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
-                  <h2 className="text-2xl font-bold">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                     {employee.firstName} {employee.lastName}
                   </h2>
                   <span
                     className={`text-xs px-2 py-1 rounded ${
                       employee.isActive
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
+                        ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-400'
+                        : 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-400'
                     }`}
                   >
                     {employee.isActive ? 'Active' : 'Inactive'}
@@ -255,22 +255,22 @@ export default function EmployeeDetailPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                  <div className="flex items-center gap-2 text-gray-600">
+                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                     <Mail className="h-4 w-4" />
                     <span>{employee.email}</span>
                   </div>
                   {employee.phone && (
-                    <div className="flex items-center gap-2 text-gray-600">
+                    <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                       <Phone className="h-4 w-4" />
                       <span>{employee.phone}</span>
                     </div>
                   )}
-                  <div className="flex items-center gap-2 text-gray-600">
+                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                     <Briefcase className="h-4 w-4" />
                     <span>{employee.role?.name || '-'}</span>
                   </div>
                   {employee.department && (
-                    <div className="flex items-center gap-2 text-gray-600">
+                    <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                       <Building2 className="h-4 w-4" />
                       <span>{employee.department.name}</span>
                     </div>
@@ -279,8 +279,8 @@ export default function EmployeeDetailPage() {
 
                 {employee.employeeCode && (
                   <div className="mt-4">
-                    <span className="text-sm text-gray-500">Employee Code: </span>
-                    <span className="font-medium">{employee.employeeCode}</span>
+                    <span className="text-sm text-gray-500 dark:text-gray-400">Employee Code: </span>
+                    <span className="font-medium text-gray-900 dark:text-gray-100">{employee.employeeCode}</span>
                   </div>
                 )}
               </div>
@@ -334,7 +334,7 @@ export default function EmployeeDetailPage() {
                         </TableRow>
                       ) : attendance.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                          <TableCell colSpan={5} className="text-center py-8 text-gray-500 dark:text-gray-400">
                             No attendance records found
                           </TableCell>
                         </TableRow>
@@ -397,7 +397,7 @@ export default function EmployeeDetailPage() {
                         </TableRow>
                       ) : leaveRequests.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                          <TableCell colSpan={5} className="text-center py-8 text-gray-500 dark:text-gray-400">
                             No leave requests found
                           </TableCell>
                         </TableRow>
@@ -457,7 +457,7 @@ export default function EmployeeDetailPage() {
                         </TableRow>
                       ) : auditLogs.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                          <TableCell colSpan={4} className="text-center py-8 text-gray-500 dark:text-gray-400">
                             No activity records found
                           </TableCell>
                         </TableRow>
@@ -477,22 +477,22 @@ export default function EmployeeDetailPage() {
                             <TableCell>
                               {log.entity}
                               {log.entityName && (
-                                <span className="text-gray-500 ml-1">
+                                <span className="text-gray-500 dark:text-gray-400 ml-1">
                                   ({log.entityName})
                                 </span>
                               )}
                             </TableCell>
                             <TableCell className="max-w-xs truncate">
                               {log.changes ? (
-                                <span className="text-gray-600 text-sm">
+                                <span className="text-gray-600 dark:text-gray-400 text-sm">
                                   {Object.keys(log.changes).join(', ')} changed
                                 </span>
                               ) : log.newValue ? (
-                                <span className="text-gray-600 text-sm">
+                                <span className="text-gray-600 dark:text-gray-400 text-sm">
                                   New record created
                                 </span>
                               ) : (
-                                <span className="text-gray-400 text-sm">-</span>
+                                <span className="text-gray-400 dark:text-gray-500 text-sm">-</span>
                               )}
                             </TableCell>
                           </TableRow>

@@ -118,13 +118,13 @@ export default function SalaryStructuresPage() {
       ]);
 
       if (structuresRes.success && structuresRes.data) {
-        setStructures(structuresRes.data.data);
+        setStructures(structuresRes.data.data || []);
       }
       if (employeesRes.success && employeesRes.data) {
-        setEmployees(employeesRes.data.users);
+        setEmployees(employeesRes.data.users || []);
       }
       if (componentsRes.success && componentsRes.data) {
-        setSalaryComponents(componentsRes.data.components);
+        setSalaryComponents(componentsRes.data.components || []);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch data');
@@ -622,7 +622,7 @@ export default function SalaryStructuresPage() {
 
         {/* Create/Edit Modal */}
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-4xl">
             <DialogHeader>
               <DialogTitle>
                 {selectedStructure ? 'Edit' : 'Assign'} Salary Structure
@@ -939,7 +939,7 @@ export default function SalaryStructuresPage() {
 
         {/* View Modal */}
         <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
-          <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-2xl">
             {selectedStructure && (
               <>
                 <DialogHeader>

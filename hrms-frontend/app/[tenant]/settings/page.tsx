@@ -314,7 +314,7 @@ export default function SettingsPage() {
                       type="button"
                       onClick={handleAvatarClick}
                       disabled={uploadingAvatar}
-                      className="absolute bottom-0 right-0 p-1.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors disabled:opacity-50"
+                      className="absolute bottom-0 right-0 p-1.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors disabled:opacity-50 cursor-pointer"
                     >
                       <Camera className="h-4 w-4" />
                     </button>

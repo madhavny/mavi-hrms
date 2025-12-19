@@ -471,7 +471,7 @@ export default function AuditLogsPage() {
 
         {/* Detail Modal */}
         <Dialog open={!!selectedLog} onOpenChange={() => setSelectedLog(null)}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Audit Log Detail</DialogTitle>
               <DialogDescription>

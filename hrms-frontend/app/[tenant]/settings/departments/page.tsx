@@ -64,7 +64,7 @@ function DepartmentTreeNode({ department, level, onEdit, onDelete, expandedIds, 
         {hasChildren ? (
           <button
             onClick={() => toggleExpand(department.id)}
-            className="p-0.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+            className="p-0.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded cursor-pointer"
           >
             {isExpanded ? (
               <ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400" />

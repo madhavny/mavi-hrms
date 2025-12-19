@@ -187,7 +187,7 @@ export default function EmailPreferencesPage() {
     return (
       <DashboardLayout title="Email Preferences">
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+          <Loader2 className="h-8 w-8 animate-spin text-gray-400 dark:text-gray-500" />
         </div>
       </DashboardLayout>
     );
@@ -197,7 +197,7 @@ export default function EmailPreferencesPage() {
     <DashboardLayout title="Email Preferences">
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
@@ -216,7 +216,8 @@ export default function EmailPreferencesPage() {
               disabled={saving}
             >
               <PowerOff className="h-4 w-4 mr-2" />
-              Disable All
+              <span className="hidden sm:inline">Disable All</span>
+              <span className="sm:hidden">Off</span>
             </Button>
             <Button
               variant="outline"
@@ -225,20 +226,21 @@ export default function EmailPreferencesPage() {
               disabled={saving}
             >
               <Power className="h-4 w-4 mr-2" />
-              Enable All
+              <span className="hidden sm:inline">Enable All</span>
+              <span className="sm:hidden">On</span>
             </Button>
           </div>
         </div>
 
         {/* Success/Error Messages */}
         {successMessage && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-2 text-green-700">
+          <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-4 flex items-center gap-2 text-green-700 dark:text-green-400">
             <CheckCircle className="h-5 w-5" />
             {successMessage}
           </div>
         )}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-2 text-red-700">
+          <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-center gap-2 text-red-700 dark:text-red-400">
             <AlertCircle className="h-5 w-5" />
             {error}
           </div>
@@ -271,15 +273,15 @@ export default function EmailPreferencesPage() {
                 return (
                   <div
                     key={item.key}
-                    className="flex items-center justify-between py-3 border-b last:border-b-0"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between py-3 border-b dark:border-gray-700 last:border-b-0 gap-3"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="p-2 bg-gray-100 rounded-lg">
-                        <Icon className="h-5 w-5 text-gray-600" />
+                      <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                        <Icon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">{item.label}</p>
-                        <p className="text-sm text-gray-500">{item.description}</p>
+                        <p className="font-medium text-gray-900 dark:text-gray-100">{item.label}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{item.description}</p>
                       </div>
                     </div>
                     <Switch
@@ -302,14 +304,14 @@ export default function EmailPreferencesPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between py-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between py-3 gap-3">
               <div className="flex items-start gap-3">
-                <div className="p-2 bg-gray-100 rounded-lg">
-                  <Bell className="h-5 w-5 text-gray-600" />
+                <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                  <Bell className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900">Enable Daily Digest</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="font-medium text-gray-900 dark:text-gray-100">Enable Daily Digest</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     Receive a single email each day with all your notifications (at {preferences?.digestTime || '09:00'})
                   </p>
                 </div>

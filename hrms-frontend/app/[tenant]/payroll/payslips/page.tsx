@@ -559,7 +559,7 @@ export default function PayslipsPage() {
 
         {/* View Payslip Modal */}
         <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
-          <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-2xl">
             {selectedPayslip && (
               <>
                 <DialogHeader>

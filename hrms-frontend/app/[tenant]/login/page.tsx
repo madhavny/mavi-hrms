@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { tenantApi } from '@/lib/api';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 export default function TenantLoginPage() {
   const router = useRouter();
@@ -43,7 +44,14 @@ export default function TenantLoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4 relative">
       {/* Theme Toggle - Top Right */}
       <div className="absolute top-4 right-4">
-        <ThemeToggle />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div>
+              <ThemeToggle />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>Toggle theme</TooltipContent>
+        </Tooltip>
       </div>
 
       <div className="w-full max-w-md p-6 sm:p-8 bg-white dark:bg-gray-800 rounded-lg shadow-md dark:shadow-gray-900/50">
@@ -83,18 +91,28 @@ export default function TenantLoginPage() {
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? 'Signing in...' : 'Sign In'}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Sign in to your account</TooltipContent>
+          </Tooltip>
         </form>
 
         <div className="mt-6 text-center">
-          <Link
-            href={`/${tenantSlug}/forgot-password`}
-            className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300"
-          >
-            Forgot your password?
-          </Link>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                href={`/${tenantSlug}/forgot-password`}
+                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300"
+              >
+                Forgot your password?
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>Reset your password</TooltipContent>
+          </Tooltip>
         </div>
       </div>
     </div>

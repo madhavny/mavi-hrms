@@ -386,14 +386,14 @@ export default function TimesheetPage() {
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                   <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-2 font-medium min-w-[200px]">Project</th>
+                    <tr className="border-b dark:border-gray-700">
+                      <th className="text-left p-2 font-medium min-w-[200px] dark:text-gray-200">Project</th>
                       {weeklyData?.weekDays?.map((day) => (
-                        <th key={day} className="text-center p-2 font-medium min-w-[100px]">
+                        <th key={day} className="text-center p-2 font-medium min-w-[100px] dark:text-gray-200">
                           {formatDate(day)}
                         </th>
                       ))}
-                      <th className="text-center p-2 font-medium min-w-[80px]">Total</th>
+                      <th className="text-center p-2 font-medium min-w-[80px] dark:text-gray-200">Total</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -401,8 +401,8 @@ export default function TimesheetPage() {
                     {weeklyData?.projects?.map((project) => (
                       <tr key={project.id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
                         <td className="p-2">
-                          <div className="font-medium">{project.name}</div>
-                          <div className="text-xs text-gray-500">{project.code}</div>
+                          <div className="font-medium dark:text-white">{project.name}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">{project.code}</div>
                         </td>
                         {weeklyData?.weekDays?.map((day) => {
                           const log = getCellValue(project.id, day);
@@ -433,7 +433,7 @@ export default function TimesheetPage() {
                               ) : (
                                 <button
                                   onClick={() => handleCellClick(project.id, day)}
-                                  className={`w-full h-10 rounded border ${
+                                  className={`w-full h-10 rounded border cursor-pointer ${
                                     log
                                       ? log.status === 'DRAFT'
                                         ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50'
@@ -449,7 +449,7 @@ export default function TimesheetPage() {
                             </td>
                           );
                         })}
-                        <td className="p-2 text-center font-medium">
+                        <td className="p-2 text-center font-medium dark:text-white">
                           {getProjectTotal(project.id).toFixed(1)}
                         </td>
                       </tr>
@@ -489,7 +489,7 @@ export default function TimesheetPage() {
                             ) : (
                               <button
                                 onClick={() => handleCellClick(null, day)}
-                                className={`w-full h-10 rounded border ${
+                                className={`w-full h-10 rounded border cursor-pointer ${
                                   log
                                     ? log.status === 'DRAFT'
                                       ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50'
@@ -503,7 +503,7 @@ export default function TimesheetPage() {
                           </td>
                         );
                       })}
-                      <td className="p-2 text-center font-medium">
+                      <td className="p-2 text-center font-medium dark:text-white">
                         {getProjectTotal(null).toFixed(1)}
                       </td>
                     </tr>
@@ -512,11 +512,11 @@ export default function TimesheetPage() {
                     <tr className="bg-gray-50 dark:bg-gray-800 font-medium">
                       <td className="p-2 dark:text-white">Daily Total</td>
                       {weeklyData?.weekDays?.map((day) => (
-                        <td key={day} className="p-2 text-center">
+                        <td key={day} className="p-2 text-center dark:text-gray-200">
                           {getDayTotal(day).toFixed(1)}
                         </td>
                       ))}
-                      <td className="p-2 text-center text-blue-600">
+                      <td className="p-2 text-center text-blue-600 dark:text-blue-400">
                         {weeklyData?.totalHours?.toFixed(1) || '0.0'}
                       </td>
                     </tr>
@@ -614,14 +614,14 @@ export default function TimesheetPage() {
               </CardHeader>
               <CardContent>
                 {pendingApprovals.length === 0 ? (
-                  <div className="py-8 text-center text-gray-500">
+                  <div className="py-8 text-center text-gray-500 dark:text-gray-400">
                     <CheckCircle2 className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                     <p>No pending timesheet approvals</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     {pendingApprovals.map((log) => (
-                      <div key={log.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div key={log.id} className="flex items-center justify-between p-4 border dark:border-gray-700 rounded-lg">
                         <div className="flex items-center gap-4">
                           <Avatar className="h-10 w-10">
                             <AvatarImage src={log.user?.avatar || undefined} />
@@ -630,14 +630,14 @@ export default function TimesheetPage() {
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <p className="font-medium">
+                            <p className="font-medium dark:text-white">
                               {log.user?.firstName} {log.user?.lastName}
                             </p>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
                               {log.project?.name || 'No Project'} | {new Date(log.date).toLocaleDateString()} | {log.hours}h
                             </p>
                             {log.description && (
-                              <p className="text-sm text-gray-400">{log.description}</p>
+                              <p className="text-sm text-gray-400 dark:text-gray-500">{log.description}</p>
                             )}
                           </div>
                         </div>

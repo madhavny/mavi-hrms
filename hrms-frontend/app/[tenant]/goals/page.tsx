@@ -433,7 +433,7 @@ export default function GoalsPage() {
                   {/* Expand button for goals with children/KRs */}
                   <button
                     onClick={() => toggleExpanded(goal.id)}
-                    className="mt-1 p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                    className="mt-1 p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer"
                   >
                     {expandedGoals.has(goal.id) ? (
                       <ChevronDown className="h-4 w-4" />
@@ -606,7 +606,7 @@ export default function GoalsPage() {
 
       {/* Create/Edit Goal Modal */}
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>{editingGoal ? 'Edit Goal' : 'Create New Goal'}</DialogTitle>
           </DialogHeader>

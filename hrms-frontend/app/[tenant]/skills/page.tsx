@@ -629,7 +629,7 @@ export default function SkillsPage() {
                             <button
                               key={level}
                               onClick={() => handleUpdateMySkill(es.skillId, level)}
-                              className={`w-6 h-6 rounded ${level <= es.level ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
+                              className={`w-6 h-6 rounded cursor-pointer ${level <= es.level ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
                             >
                               {level}
                             </button>
@@ -798,7 +798,7 @@ export default function SkillsPage() {
                   <button
                     key={level.value}
                     onClick={() => setAssignForm({ ...assignForm, level: level.value })}
-                    className={`px-3 py-1 rounded text-sm ${assignForm.level === level.value ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
+                    className={`px-3 py-1 rounded text-sm cursor-pointer ${assignForm.level === level.value ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
                   >
                     {level.value}
                   </button>

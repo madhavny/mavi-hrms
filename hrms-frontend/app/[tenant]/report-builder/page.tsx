@@ -645,7 +645,7 @@ export default function ReportBuilderPage() {
                   {filteredTemplates
                     .filter((t) => !t.isPublic || t.createdBy === stats?.myTemplates)
                     .map((template) => (
-                      <Card key={template.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                      <Card key={template.id} className="cursor-pointer hover:shadow-md dark:hover:shadow-gray-800/50 transition-shadow bg-white dark:bg-gray-800 border dark:border-gray-700">
                         <CardHeader className="pb-2">
                           <div className="flex items-start justify-between">
                             <div className="flex items-center gap-2">
@@ -659,7 +659,7 @@ export default function ReportBuilderPage() {
                           <CardDescription className="line-clamp-2">{template.description || 'No description'}</CardDescription>
                         </CardHeader>
                         <CardContent>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+                          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-3">
                             <Badge variant="outline">{template.dataSource}</Badge>
                             <Badge variant="outline">{template.chartType}</Badge>
                             <span>{template.selectedFields.length} fields</span>
@@ -684,7 +684,7 @@ export default function ReportBuilderPage() {
                       </Card>
                     ))}
                   {filteredTemplates.length === 0 && (
-                    <div className="col-span-full text-center py-8 text-muted-foreground">
+                    <div className="col-span-full text-center py-8 text-gray-500 dark:text-gray-400">
                       No templates found. Create your first report!
                     </div>
                   )}
@@ -696,7 +696,7 @@ export default function ReportBuilderPage() {
                   {filteredTemplates
                     .filter((t) => t.isPublic)
                     .map((template) => (
-                      <Card key={template.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                      <Card key={template.id} className="cursor-pointer hover:shadow-md dark:hover:shadow-gray-800/50 transition-shadow bg-white dark:bg-gray-800 border dark:border-gray-700">
                         <CardHeader className="pb-2">
                           <div className="flex items-start justify-between">
                             <div className="flex items-center gap-2">
@@ -708,7 +708,7 @@ export default function ReportBuilderPage() {
                           <CardDescription className="line-clamp-2">{template.description || 'No description'}</CardDescription>
                         </CardHeader>
                         <CardContent>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+                          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-3">
                             <Badge variant="outline">{template.dataSource}</Badge>
                             <span>by {template.creator?.firstName || 'Unknown'}</span>
                           </div>
@@ -758,7 +758,7 @@ export default function ReportBuilderPage() {
                     </TableBody>
                   </Table>
                 ) : (
-                  <div className="text-center py-8 text-muted-foreground">No reports generated yet</div>
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">No reports generated yet</div>
                 )}
               </TabsContent>
             </Tabs>
@@ -768,13 +768,13 @@ export default function ReportBuilderPage() {
 
       {/* Report Builder Dialog */}
       <Dialog open={showBuilder} onOpenChange={setShowBuilder}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl bg-white dark:bg-gray-900">
           <DialogHeader>
             <DialogTitle>{editingTemplate ? 'Edit Report' : 'Create New Report'}</DialogTitle>
             <DialogDescription>Design your custom report by selecting fields and configuring options</DialogDescription>
           </DialogHeader>
 
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left Panel - Available Fields */}
             <div className="space-y-4">
               <div>
@@ -804,21 +804,21 @@ export default function ReportBuilderPage() {
               {availableFields.length > 0 && (
                 <div>
                   <Label className="mb-2 block">Available Fields</Label>
-                  <div className="border rounded-lg p-2 max-h-[400px] overflow-y-auto space-y-2">
+                  <div className="border dark:border-gray-700 rounded-lg p-2 max-h-[400px] overflow-y-auto space-y-2 bg-white dark:bg-gray-800">
                     {Object.entries(groupFieldsByCategory(availableFields)).map(([category, fields]) => (
                       <div key={category}>
-                        <div className="text-xs font-semibold text-muted-foreground uppercase mb-1">{category}</div>
+                        <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">{category}</div>
                         {fields.map((field) => (
                           <div
                             key={field.id}
                             draggable
                             onDragStart={() => handleDragStart(field.id)}
-                            className={`flex items-center gap-2 p-2 rounded cursor-move hover:bg-accent ${
+                            className={`flex items-center gap-2 p-2 rounded cursor-move hover:bg-gray-100 dark:hover:bg-gray-700 ${
                               selectedFields.includes(field.id) ? 'opacity-50' : ''
                             }`}
                           >
-                            <GripVertical className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm">{field.name}</span>
+                            <GripVertical className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                            <span className="text-sm text-gray-900 dark:text-gray-100">{field.name}</span>
                             <Badge variant="outline" className="text-xs ml-auto">
                               {field.type}
                             </Badge>
@@ -848,10 +848,10 @@ export default function ReportBuilderPage() {
                 <div
                   onDragOver={handleDragOver}
                   onDrop={handleDropOnSelected}
-                  className="border-2 border-dashed rounded-lg p-4 min-h-[200px] max-h-[300px] overflow-y-auto"
+                  className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 min-h-[200px] max-h-[300px] overflow-y-auto bg-gray-50 dark:bg-gray-800"
                 >
                   {selectedFields.length === 0 ? (
-                    <div className="text-center text-muted-foreground py-8">
+                    <div className="text-center text-gray-500 dark:text-gray-400 py-8">
                       <ChevronRight className="h-8 w-8 mx-auto mb-2" />
                       <p>Drag fields here</p>
                     </div>
@@ -860,8 +860,8 @@ export default function ReportBuilderPage() {
                       {selectedFields.map((fieldId) => {
                         const field = availableFields.find((f) => f.id === fieldId);
                         return (
-                          <div key={fieldId} className="flex items-center justify-between p-2 bg-accent rounded">
-                            <span className="text-sm">{field?.name || fieldId}</span>
+                          <div key={fieldId} className="flex items-center justify-between p-2 bg-blue-50 dark:bg-blue-900/30 rounded border border-blue-200 dark:border-blue-800">
+                            <span className="text-sm text-gray-900 dark:text-gray-100">{field?.name || fieldId}</span>
                             <Button size="sm" variant="ghost" onClick={() => handleRemoveField(fieldId)}>
                               <X className="h-3 w-3" />
                             </Button>
@@ -913,7 +913,7 @@ export default function ReportBuilderPage() {
                     const field = availableFields.find((f) => f.id === filter.field);
                     const operators = FILTER_OPERATORS[field?.type || 'TEXT'] || FILTER_OPERATORS.TEXT;
                     return (
-                      <div key={index} className="flex items-center gap-2 p-2 border rounded">
+                      <div key={index} className="flex items-center gap-2 p-2 border dark:border-gray-700 rounded bg-white dark:bg-gray-800">
                         <Select value={filter.field} onValueChange={(v) => handleFilterChange(index, 'field', v)}>
                           <SelectTrigger className="w-[120px]">
                             <SelectValue />
@@ -1016,7 +1016,7 @@ export default function ReportBuilderPage() {
 
       {/* Preview Dialog */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-4xl bg-white dark:bg-gray-900">
           <DialogHeader>
             <DialogTitle>Report Preview</DialogTitle>
             <DialogDescription>Showing first 10 records</DialogDescription>
@@ -1034,7 +1034,7 @@ export default function ReportBuilderPage() {
 
       {/* Run Result Dialog */}
       <Dialog open={showRunResult} onOpenChange={setShowRunResult}>
-        <DialogContent className="max-w-5xl max-h-[90vh]">
+        <DialogContent className="max-w-5xl bg-white dark:bg-gray-900">
           <DialogHeader>
             <DialogTitle>{runResult?.templateName || 'Report Results'}</DialogTitle>
             <DialogDescription>
@@ -1045,13 +1045,13 @@ export default function ReportBuilderPage() {
             {runResult && renderChart(runResult.data, runResult.fieldMeta, runResult.chartType)}
           </div>
           {runResult?.summary && Object.keys(runResult.summary).length > 0 && (
-            <div className="border-t pt-4">
-              <h4 className="font-semibold mb-2">Summary</h4>
+            <div className="border-t dark:border-gray-700 pt-4">
+              <h4 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">Summary</h4>
               <div className="flex gap-4 flex-wrap">
                 {Object.entries(runResult.summary).map(([key, value]) => (
-                  <div key={key} className="bg-accent rounded p-2">
-                    <span className="text-sm text-muted-foreground">{key}: </span>
-                    <span className="font-semibold">{typeof value === 'number' ? value.toLocaleString() : value}</span>
+                  <div key={key} className="bg-gray-100 dark:bg-gray-800 rounded p-2 border dark:border-gray-700">
+                    <span className="text-sm text-gray-500 dark:text-gray-400">{key}: </span>
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">{typeof value === 'number' ? value.toLocaleString() : value}</span>
                   </div>
                 ))}
               </div>

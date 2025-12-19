@@ -200,10 +200,15 @@ export default function RecruitmentPage() {
         tenantApi.getLocations(),
         tenantApi.getUsers(),
       ]);
-      if (deptRes.data) setDepartments(deptRes.data.map((d: { id: number; name: string }) => ({ id: d.id, name: d.name })));
-      if (desigRes.data) setDesignations(desigRes.data.map((d: { id: number; name: string }) => ({ id: d.id, name: d.name })));
-      if (locRes.data) setLocations(locRes.data.map((l: { id: number; name: string }) => ({ id: l.id, name: l.name })));
-      if (usersRes.data) setUsers(usersRes.data.users.map((u: { id: number; firstName: string; lastName?: string }) => ({ id: u.id, firstName: u.firstName, lastName: u.lastName })));
+      const deptData = Array.isArray(deptRes.data) ? deptRes.data : (deptRes.data?.departments || []);
+      const desigData = Array.isArray(desigRes.data) ? desigRes.data : (desigRes.data?.designations || []);
+      const locData = Array.isArray(locRes.data) ? locRes.data : (locRes.data?.locations || []);
+      const userData = usersRes.data?.users || [];
+
+      setDepartments(deptData.map((d: { id: number; name: string }) => ({ id: d.id, name: d.name })));
+      setDesignations(desigData.map((d: { id: number; name: string }) => ({ id: d.id, name: d.name })));
+      setLocations(locData.map((l: { id: number; name: string }) => ({ id: l.id, name: l.name })));
+      setUsers(userData.map((u: { id: number; firstName: string; lastName?: string }) => ({ id: u.id, firstName: u.firstName, lastName: u.lastName })));
     } catch (err) {
       console.error('Failed to load options:', err);
     }
@@ -549,12 +554,12 @@ export default function RecruitmentPage() {
         {/* Jobs Tab */}
         <TabsContent value="jobs">
           <div className="flex items-center gap-4 mb-4">
-            <Select value={filterJobStatus} onValueChange={(v) => setFilterJobStatus(v as JobStatus | '')}>
+            <Select value={filterJobStatus || '__all__'} onValueChange={(v) => setFilterJobStatus(v === '__all__' ? '' : v as JobStatus)}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Status</SelectItem>
+                <SelectItem value="__all__">All Status</SelectItem>
                 <SelectItem value="DRAFT">Draft</SelectItem>
                 <SelectItem value="ACTIVE">Active</SelectItem>
                 <SelectItem value="PAUSED">Paused</SelectItem>
@@ -667,23 +672,23 @@ export default function RecruitmentPage() {
         {/* Applications Tab */}
         <TabsContent value="applications">
           <div className="flex items-center gap-4 mb-4">
-            <Select value={selectedJobId?.toString() || ''} onValueChange={(v) => setSelectedJobId(v ? parseInt(v) : null)}>
+            <Select value={selectedJobId?.toString() || '__all__'} onValueChange={(v) => setSelectedJobId(v === '__all__' ? null : parseInt(v))}>
               <SelectTrigger className="w-[250px]">
                 <SelectValue placeholder="All Jobs" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Jobs</SelectItem>
+                <SelectItem value="__all__">All Jobs</SelectItem>
                 {jobs.map((job) => (
                   <SelectItem key={job.id} value={job.id.toString()}>{job.title}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <Select value={filterAppStatus} onValueChange={(v) => setFilterAppStatus(v as ApplicationStatus | '')}>
+            <Select value={filterAppStatus || '__all__'} onValueChange={(v) => setFilterAppStatus(v === '__all__' ? '' : v as ApplicationStatus)}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Status</SelectItem>
+                <SelectItem value="__all__">All Status</SelectItem>
                 {Object.entries(APP_STATUS_CONFIG).map(([key, config]) => (
                   <SelectItem key={key} value={key}>{config.label}</SelectItem>
                 ))}
@@ -758,12 +763,12 @@ export default function RecruitmentPage() {
         {/* Pipeline Tab - Kanban Board */}
         <TabsContent value="pipeline">
           <div className="flex items-center gap-4 mb-4">
-            <Select value={selectedJobId?.toString() || ''} onValueChange={(v) => setSelectedJobId(v ? parseInt(v) : null)}>
+            <Select value={selectedJobId?.toString() || '__all__'} onValueChange={(v) => setSelectedJobId(v === '__all__' ? null : parseInt(v))}>
               <SelectTrigger className="w-[250px]">
                 <SelectValue placeholder="All Jobs" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Jobs</SelectItem>
+                <SelectItem value="__all__">All Jobs</SelectItem>
                 {jobs.filter(j => j.status === 'ACTIVE').map((job) => (
                   <SelectItem key={job.id} value={job.id.toString()}>{job.title}</SelectItem>
                 ))}
@@ -840,7 +845,7 @@ export default function RecruitmentPage() {
 
       {/* Job Modal */}
       <Dialog open={showJobModal} onOpenChange={setShowJobModal}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>{editingJob ? 'Edit Job Posting' : 'Create Job Posting'}</DialogTitle>
           </DialogHeader>
@@ -1089,7 +1094,7 @@ export default function RecruitmentPage() {
                     <button
                       key={star}
                       onClick={() => handleUpdateAppRating(selectedApplication.id, star)}
-                      className="focus:outline-none"
+                      className="focus:outline-none cursor-pointer"
                     >
                       <Star
                         className={`h-6 w-6 ${star <= (selectedApplication.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} hover:text-yellow-400`}
