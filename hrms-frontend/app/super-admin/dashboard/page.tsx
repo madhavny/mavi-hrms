@@ -39,7 +39,20 @@ import {
   Ban,
   ExternalLink,
   Eye,
+  ChevronDown,
+  ChevronUp,
+  Settings,
+  Save,
 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  AVAILABLE_MODULES,
+  DEFAULT_ENABLED_MODULES,
+  CORE_MODULES,
+  MODULE_CATEGORIES,
+  getModulesByCategory,
+  isCoreModule,
+} from '@/lib/modules';
 
 export default function SuperAdminDashboard() {
   const router = useRouter();
@@ -51,6 +64,8 @@ export default function SuperAdminDashboard() {
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [editingModules, setEditingModules] = useState<string[]>([]);
+  const [modulesSaving, setModulesSaving] = useState(false);
 
   // Confirmation dialog state
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -113,6 +128,8 @@ export default function SuperAdminDashboard() {
       const res = await superAdminApi.getTenant(tenant.id);
       if (res.data) {
         setSelectedTenant(res.data as Tenant);
+        // Initialize editing modules with current tenant modules or all if not set
+        setEditingModules(res.data.enabledModules?.length > 0 ? res.data.enabledModules : DEFAULT_ENABLED_MODULES);
         setShowDetails(true);
       }
     } catch (err) {
@@ -124,6 +141,54 @@ export default function SuperAdminDashboard() {
     } finally {
       setActionLoading(null);
     }
+  };
+
+  const handleSaveModules = async () => {
+    if (!selectedTenant) return;
+
+    setModulesSaving(true);
+    try {
+      // Ensure core modules are always included
+      const modulesToSave = [...new Set([...editingModules, ...CORE_MODULES])];
+      await superAdminApi.updateTenant(selectedTenant.id, { enabledModules: modulesToSave });
+
+      // Update the selected tenant state
+      setSelectedTenant({ ...selectedTenant, enabledModules: modulesToSave });
+      loadData();
+
+      toast({
+        variant: 'success',
+        title: 'Success',
+        description: 'Module configuration saved successfully',
+      });
+    } catch (err) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to save module configuration',
+      });
+    } finally {
+      setModulesSaving(false);
+    }
+  };
+
+  const toggleModule = (moduleId: string) => {
+    if (isCoreModule(moduleId)) return; // Cannot toggle core modules
+
+    setEditingModules(prev =>
+      prev.includes(moduleId)
+        ? prev.filter(m => m !== moduleId)
+        : [...prev, moduleId]
+    );
+  };
+
+  const selectAllModules = () => {
+    setEditingModules(DEFAULT_ENABLED_MODULES);
+  };
+
+  const deselectAllModules = () => {
+    // Keep only core modules
+    setEditingModules([...CORE_MODULES]);
   };
 
   const handleStatusChange = async (id: number, status: string) => {
@@ -210,8 +275,8 @@ export default function SuperAdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <header className="bg-white shadow-sm">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <header className="bg-white dark:bg-gray-800 shadow-sm dark:shadow-gray-900/50">
           <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
             <Skeleton className="h-8 w-64" />
             <Skeleton className="h-10 w-24" />
@@ -230,11 +295,11 @@ export default function SuperAdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="bg-white dark:bg-gray-800 shadow-sm dark:shadow-gray-900/50">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold text-gray-900">Mavi HRMS - Super Admin</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Mavi HRMS - Super Admin</h1>
           <Button variant="outline" onClick={handleLogout}>Logout</Button>
         </div>
       </header>
@@ -248,9 +313,9 @@ export default function SuperAdminDashboard() {
         </div>
 
         {/* Tenants Section */}
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/50 p-6">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-semibold">Tenants</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Tenants</h2>
             <Dialog open={showCreate} onOpenChange={setShowCreate}>
               <DialogTrigger asChild>
                 <Button>Add Tenant</Button>
@@ -276,26 +341,26 @@ export default function SuperAdminDashboard() {
           {/* Desktop Table */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium text-gray-600">Name</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-600">Slug</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-600">Email</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-600">Status</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-600">Users</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-600">Actions</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">Name</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">Slug</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">Email</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">Status</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">Users</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y">
+              <tbody className="divide-y dark:divide-gray-700">
                 {tenants.map((tenant) => (
-                  <tr key={tenant.id}>
-                    <td className="px-4 py-3 font-medium">{tenant.name}</td>
-                    <td className="px-4 py-3 text-gray-600">{tenant.slug}</td>
-                    <td className="px-4 py-3 text-gray-600">{tenant.email}</td>
+                  <tr key={tenant.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{tenant.name}</td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{tenant.slug}</td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{tenant.email}</td>
                     <td className="px-4 py-3">
                       <StatusBadge status={tenant.status} />
                     </td>
-                    <td className="px-4 py-3">{tenant._count?.users || 0}</td>
+                    <td className="px-4 py-3 text-gray-900 dark:text-gray-100">{tenant._count?.users || 0}</td>
                     <td className="px-4 py-3 space-x-2">
                       <Button
                         variant="ghost"
@@ -320,8 +385,8 @@ export default function SuperAdminDashboard() {
                 {tenants.length === 0 && (
                   <tr>
                     <td colSpan={6} className="px-4 py-12 text-center">
-                      <Building2 className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-                      <p className="text-gray-500 mb-4">No tenants yet</p>
+                      <Building2 className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+                      <p className="text-gray-500 dark:text-gray-400 mb-4">No tenants yet</p>
                       <Button onClick={() => setShowCreate(true)}>Create Your First Tenant</Button>
                     </td>
                   </tr>
@@ -333,15 +398,15 @@ export default function SuperAdminDashboard() {
           {/* Mobile Cards */}
           <div className="md:hidden space-y-4">
             {tenants.map((tenant) => (
-              <div key={tenant.id} className="border rounded-lg p-4 space-y-3">
+              <div key={tenant.id} className="border dark:border-gray-700 rounded-lg p-4 space-y-3 bg-white dark:bg-gray-800">
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="font-medium">{tenant.name}</p>
-                    <p className="text-sm text-gray-600">{tenant.email}</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">{tenant.name}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{tenant.email}</p>
                   </div>
                   <StatusBadge status={tenant.status} />
                 </div>
-                <div className="flex items-center justify-between text-sm text-gray-600">
+                <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
                   <span>/{tenant.slug}</span>
                   <span>{tenant._count?.users || 0} users</span>
                 </div>
@@ -368,8 +433,8 @@ export default function SuperAdminDashboard() {
             ))}
             {tenants.length === 0 && (
               <div className="text-center py-12">
-                <Building2 className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-                <p className="text-gray-500 mb-4">No tenants yet</p>
+                <Building2 className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+                <p className="text-gray-500 dark:text-gray-400 mb-4">No tenants yet</p>
                 <Button onClick={() => setShowCreate(true)}>Create Your First Tenant</Button>
               </div>
             )}
@@ -389,52 +454,52 @@ export default function SuperAdminDashboard() {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-gray-600">Company Name</p>
-                    <p className="font-medium">{selectedTenant.name}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Company Name</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">{selectedTenant.name}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Slug</p>
-                    <p className="font-medium">{selectedTenant.slug}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Slug</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">{selectedTenant.slug}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Email</p>
-                    <p className="font-medium">{selectedTenant.email}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Email</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">{selectedTenant.email}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Status</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Status</p>
                     <StatusBadge status={selectedTenant.status} />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Total Users</p>
-                    <p className="font-medium">{selectedTenant._count?.users || 0}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Total Users</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">{selectedTenant._count?.users || 0}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Created</p>
-                    <p className="font-medium">{formatDate(selectedTenant.createdAt)}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Created</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">{formatDate(selectedTenant.createdAt)}</p>
                   </div>
                 </div>
 
-                <div className="border-t pt-4">
-                  <p className="text-sm font-medium text-gray-700 mb-2">Admin Users</p>
+                <div className="border-t dark:border-gray-700 pt-4">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Admin Users</p>
                   {selectedTenant.adminUsers && selectedTenant.adminUsers.length > 0 ? (
-                    <div className="bg-gray-50 p-3 rounded space-y-2">
+                    <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded space-y-2">
                       {selectedTenant.adminUsers.map((admin) => (
-                        <div key={admin.id} className="border-b pb-2 last:border-0">
-                          <p className="text-sm">
-                            <span className="text-gray-600">Name:</span> {admin.firstName} {admin.lastName}
+                        <div key={admin.id} className="border-b dark:border-gray-600 pb-2 last:border-0">
+                          <p className="text-sm text-gray-900 dark:text-gray-100">
+                            <span className="text-gray-600 dark:text-gray-400">Name:</span> {admin.firstName} {admin.lastName}
                           </p>
-                          <p className="text-sm">
-                            <span className="text-gray-600">Email:</span> {admin.email}
+                          <p className="text-sm text-gray-900 dark:text-gray-100">
+                            <span className="text-gray-600 dark:text-gray-400">Email:</span> {admin.email}
                           </p>
-                          <p className="text-sm text-amber-700 bg-amber-50 px-2 py-1 rounded mt-1">
+                          <p className="text-sm text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-2 py-1 rounded mt-1">
                             Password was provided at tenant creation and cannot be retrieved.
                           </p>
-                          <p className="text-sm mt-1">
-                            <span className="text-gray-600">Login URL:</span>{' '}
+                          <p className="text-sm mt-1 text-gray-900 dark:text-gray-100">
+                            <span className="text-gray-600 dark:text-gray-400">Login URL:</span>{' '}
                             <a
                               href={`/${selectedTenant.slug}/login`}
                               target="_blank"
-                              className="text-blue-600 hover:underline"
+                              className="text-blue-600 dark:text-blue-400 hover:underline"
                             >
                               /{selectedTenant.slug}/login
                             </a>
@@ -443,12 +508,86 @@ export default function SuperAdminDashboard() {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500">No admin users found</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">No admin users found</p>
                   )}
                 </div>
 
-                <div className="border-t pt-4">
-                  <p className="text-sm font-medium text-gray-700 mb-3">Actions</p>
+                {/* Module Configuration Section */}
+                <div className="border-t dark:border-gray-700 pt-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                      <Settings className="h-4 w-4" />
+                      Enabled Modules
+                    </p>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={selectAllModules}>
+                        Select All
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={deselectAllModules}>
+                        Deselect All
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg space-y-4 max-h-64 overflow-y-auto">
+                    {MODULE_CATEGORIES.map((category) => {
+                      const categoryModules = getModulesByCategory()[category];
+                      if (!categoryModules?.length) return null;
+
+                      return (
+                        <div key={category}>
+                          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2">{category}</p>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            {categoryModules.map((module) => {
+                              const isCore = isCoreModule(module.id);
+                              const isChecked = editingModules.includes(module.id);
+
+                              return (
+                                <label
+                                  key={module.id}
+                                  className={`flex items-center gap-2 p-2 rounded border ${
+                                    isCore
+                                      ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 cursor-not-allowed'
+                                      : isChecked
+                                      ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 cursor-pointer'
+                                      : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700'
+                                  }`}
+                                >
+                                  <Checkbox
+                                    checked={isChecked}
+                                    onCheckedChange={() => toggleModule(module.id)}
+                                    disabled={isCore}
+                                  />
+                                  <span className={`text-sm ${isCore ? 'text-blue-700 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}>
+                                    {module.label}
+                                    {isCore && <span className="text-xs ml-1">(Required)</span>}
+                                  </span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="mt-3 flex justify-end">
+                    <Button
+                      size="sm"
+                      onClick={handleSaveModules}
+                      disabled={modulesSaving}
+                    >
+                      {modulesSaving ? (
+                        <><Spinner size="sm" className="mr-2" /> Saving...</>
+                      ) : (
+                        <><Save className="h-4 w-4 mr-2" /> Save Module Changes</>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="border-t dark:border-gray-700 pt-4">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Actions</p>
                   <div className="flex flex-wrap gap-2">
                     <Button
                       size="sm"
@@ -544,25 +683,25 @@ export default function SuperAdminDashboard() {
             </DialogHeader>
             {credentialsModal.credentials && (
               <div className="space-y-4">
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                  <div className="flex items-center gap-2 text-amber-800 mb-2">
+                <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                  <div className="flex items-center gap-2 text-amber-800 dark:text-amber-400 mb-2">
                     <AlertTriangle className="h-4 w-4" />
                     <span className="font-medium">Important</span>
                   </div>
-                  <p className="text-sm text-amber-700">
+                  <p className="text-sm text-amber-700 dark:text-amber-400">
                     This is the only time you will see this password. Please save it securely.
                   </p>
                 </div>
 
                 <div className="space-y-3">
                   <div>
-                    <Label className="text-gray-600">Tenant</Label>
-                    <p className="font-medium">{credentialsModal.credentials.tenantName}</p>
+                    <Label className="text-gray-600 dark:text-gray-400">Tenant</Label>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">{credentialsModal.credentials.tenantName}</p>
                   </div>
                   <div>
-                    <Label className="text-gray-600">Admin Email</Label>
+                    <Label className="text-gray-600 dark:text-gray-400">Admin Email</Label>
                     <div className="flex items-center gap-2">
-                      <p className="font-medium flex-1">{credentialsModal.credentials.email}</p>
+                      <p className="font-medium flex-1 text-gray-900 dark:text-gray-100">{credentialsModal.credentials.email}</p>
                       <Button
                         size="sm"
                         variant="ghost"
@@ -573,9 +712,9 @@ export default function SuperAdminDashboard() {
                     </div>
                   </div>
                   <div>
-                    <Label className="text-gray-600">Password</Label>
+                    <Label className="text-gray-600 dark:text-gray-400">Password</Label>
                     <div className="flex items-center gap-2">
-                      <p className="font-mono bg-yellow-100 px-3 py-2 rounded flex-1">
+                      <p className="font-mono bg-yellow-100 dark:bg-yellow-900/50 text-gray-900 dark:text-gray-100 px-3 py-2 rounded flex-1">
                         {credentialsModal.credentials.password}
                       </p>
                       <Button
@@ -588,12 +727,12 @@ export default function SuperAdminDashboard() {
                     </div>
                   </div>
                   <div>
-                    <Label className="text-gray-600">Login URL</Label>
+                    <Label className="text-gray-600 dark:text-gray-400">Login URL</Label>
                     <div className="flex items-center gap-2">
                       <a
                         href={credentialsModal.credentials.loginUrl}
                         target="_blank"
-                        className="text-blue-600 hover:underline flex-1"
+                        className="text-blue-600 dark:text-blue-400 hover:underline flex-1"
                       >
                         {credentialsModal.credentials.loginUrl}
                       </a>
@@ -627,7 +766,7 @@ function StatCard({
   title,
   value,
   icon: Icon,
-  iconColor = 'text-gray-600'
+  iconColor = 'text-gray-600 dark:text-gray-400'
 }: {
   title: string;
   value: number;
@@ -635,11 +774,11 @@ function StatCard({
   iconColor?: string;
 }) {
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/50 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-gray-600">{title}</p>
-          <p className="text-3xl font-bold text-gray-900 mt-1">{value}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">{title}</p>
+          <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-1">{value}</p>
         </div>
         <Icon className={`h-10 w-10 ${iconColor} opacity-80`} />
       </div>
@@ -649,10 +788,10 @@ function StatCard({
 
 function StatusBadge({ status }: { status: string }) {
   const colors: Record<string, string> = {
-    ACTIVE: 'bg-green-100 text-green-800',
-    INACTIVE: 'bg-gray-100 text-gray-800',
-    SUSPENDED: 'bg-red-100 text-red-800',
-    TRIAL: 'bg-yellow-100 text-yellow-800',
+    ACTIVE: 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-400',
+    INACTIVE: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300',
+    SUSPENDED: 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-400',
+    TRIAL: 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-400',
   };
   return (
     <span className={`px-2 py-1 text-xs rounded-full font-medium ${colors[status] || colors.INACTIVE}`}>
@@ -665,6 +804,8 @@ function CreateTenantForm({ onSuccess }: { onSuccess: (credentials: { email: str
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showModules, setShowModules] = useState(false);
+  const [selectedModules, setSelectedModules] = useState<string[]>(DEFAULT_ENABLED_MODULES);
   const [form, setForm] = useState<CreateTenantInput>({
     name: '',
     slug: '',
@@ -674,6 +815,23 @@ function CreateTenantForm({ onSuccess }: { onSuccess: (credentials: { email: str
     adminFirstName: '',
     adminLastName: '',
   });
+
+  const toggleFormModule = (moduleId: string) => {
+    if (isCoreModule(moduleId)) return;
+    setSelectedModules(prev =>
+      prev.includes(moduleId)
+        ? prev.filter(m => m !== moduleId)
+        : [...prev, moduleId]
+    );
+  };
+
+  const selectAllFormModules = () => {
+    setSelectedModules(DEFAULT_ENABLED_MODULES);
+  };
+
+  const deselectAllFormModules = () => {
+    setSelectedModules([...CORE_MODULES]);
+  };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -752,7 +910,9 @@ function CreateTenantForm({ onSuccess }: { onSuccess: (credentials: { email: str
     setLoading(true);
 
     try {
-      const result = await superAdminApi.createTenant(form);
+      // Ensure core modules are always included
+      const modulesToSave = [...new Set([...selectedModules, ...CORE_MODULES])];
+      const result = await superAdminApi.createTenant({ ...form, enabledModules: modulesToSave });
       if (result.success && result.data) {
         onSuccess({
           email: result.data.credentials.email,
@@ -797,7 +957,7 @@ function CreateTenantForm({ onSuccess }: { onSuccess: (credentials: { email: str
             autoComplete="off"
             aria-invalid={!!errors.slug}
           />
-          <p className="text-xs text-gray-500">Used in login URL: /{form.slug || 'your-slug'}/login</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Used in login URL: /{form.slug || 'your-slug'}/login</p>
           {errors.slug && <p className="text-sm text-red-600">{errors.slug}</p>}
         </div>
       </div>
@@ -816,8 +976,8 @@ function CreateTenantForm({ onSuccess }: { onSuccess: (credentials: { email: str
         {errors.email && <p className="text-sm text-red-600">{errors.email}</p>}
       </div>
 
-      <hr className="my-4" />
-      <p className="text-sm font-medium text-gray-700">Admin User</p>
+      <hr className="my-4 dark:border-gray-700" />
+      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Admin User</p>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -869,10 +1029,83 @@ function CreateTenantForm({ onSuccess }: { onSuccess: (credentials: { email: str
           autoComplete="new-password"
           aria-invalid={!!errors.adminPassword}
         />
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-gray-500 dark:text-gray-400">
           Min 8 characters, 1 uppercase, 1 number, 1 special character (!@#$%^&*)
         </p>
         {errors.adminPassword && <p className="text-sm text-red-600">{errors.adminPassword}</p>}
+      </div>
+
+      {/* Module Configuration Section */}
+      <div className="border-t dark:border-gray-700 pt-4 mt-4">
+        <button
+          type="button"
+          onClick={() => setShowModules(!showModules)}
+          className="flex items-center justify-between w-full text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 cursor-pointer"
+        >
+          <span className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            Module Configuration
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              ({selectedModules.length} of {AVAILABLE_MODULES.length} enabled)
+            </span>
+          </span>
+          {showModules ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </button>
+
+        {showModules && (
+          <div className="mt-3 space-y-3">
+            <div className="flex gap-2">
+              <Button type="button" size="sm" variant="outline" onClick={selectAllFormModules}>
+                Select All
+              </Button>
+              <Button type="button" size="sm" variant="outline" onClick={deselectAllFormModules}>
+                Deselect All
+              </Button>
+            </div>
+
+            <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg space-y-3 max-h-48 overflow-y-auto">
+              {MODULE_CATEGORIES.map((category) => {
+                const categoryModules = getModulesByCategory()[category];
+                if (!categoryModules?.length) return null;
+
+                return (
+                  <div key={category}>
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">{category}</p>
+                    <div className="grid grid-cols-2 gap-1">
+                      {categoryModules.map((module) => {
+                        const isCore = isCoreModule(module.id);
+                        const isChecked = selectedModules.includes(module.id);
+
+                        return (
+                          <label
+                            key={module.id}
+                            className={`flex items-center gap-2 p-1.5 rounded text-xs ${
+                              isCore
+                                ? 'bg-blue-50 dark:bg-blue-900/20 cursor-not-allowed'
+                                : isChecked
+                                ? 'bg-green-50 dark:bg-green-900/20 cursor-pointer'
+                                : 'bg-white dark:bg-gray-800 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600'
+                            }`}
+                          >
+                            <Checkbox
+                              checked={isChecked}
+                              onCheckedChange={() => toggleFormModule(module.id)}
+                              disabled={isCore}
+                            />
+                            <span className={isCore ? 'text-blue-700 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}>
+                              {module.label}
+                              {isCore && ' (Required)'}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       <Button type="submit" className="w-full" disabled={loading}>

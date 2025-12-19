@@ -85,7 +85,8 @@ export const login = async (req, res) => {
         id: tenant.id,
         name: tenant.name,
         slug: tenant.slug,
-        logo: tenant.logo
+        logo: tenant.logo,
+        enabledModules: tenant.enabledModules || []
       }
     }
   });

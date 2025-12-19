@@ -441,23 +441,23 @@ export default function TrainingPage() {
         {/* Programs Tab */}
         <TabsContent value="programs">
           <div className="flex items-center gap-4 mb-4">
-            <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as TrainingStatus | '')}>
+            <Select value={filterStatus || '__all__'} onValueChange={(v) => setFilterStatus(v === '__all__' ? '' : v as TrainingStatus)}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Status</SelectItem>
+                <SelectItem value="__all__">All Status</SelectItem>
                 {Object.entries(TRAINING_STATUS_CONFIG).map(([key, config]) => (
                   <SelectItem key={key} value={key}>{config.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <Select value={filterType} onValueChange={(v) => setFilterType(v as TrainingType | '')}>
+            <Select value={filterType || '__all__'} onValueChange={(v) => setFilterType(v === '__all__' ? '' : v as TrainingType)}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="All Types" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Types</SelectItem>
+                <SelectItem value="__all__">All Types</SelectItem>
                 {Object.entries(TRAINING_TYPE_CONFIG).map(([key, config]) => (
                   <SelectItem key={key} value={key}>{config.label}</SelectItem>
                 ))}
@@ -609,7 +609,7 @@ export default function TrainingPage() {
 
       {/* Program Modal */}
       <Dialog open={showProgramModal} onOpenChange={setShowProgramModal}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>{editingProgram ? 'Edit Training Program' : 'Create Training Program'}</DialogTitle>
           </DialogHeader>
@@ -696,14 +696,14 @@ export default function TrainingPage() {
               <div>
                 <Label>Internal Trainer</Label>
                 <Select
-                  value={programForm.trainerId}
-                  onValueChange={(v) => setProgramForm({ ...programForm, trainerId: v })}
+                  value={programForm.trainerId || '__none__'}
+                  onValueChange={(v) => setProgramForm({ ...programForm, trainerId: v === '__none__' ? '' : v })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select trainer" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="__none__">None</SelectItem>
                     {users.map((user) => (
                       <SelectItem key={user.id} value={user.id.toString()}>
                         {user.firstName} {user.lastName}
@@ -782,7 +782,7 @@ export default function TrainingPage() {
 
       {/* Program Detail Modal */}
       <Dialog open={showDetailModal} onOpenChange={setShowDetailModal}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Program Details</DialogTitle>
           </DialogHeader>

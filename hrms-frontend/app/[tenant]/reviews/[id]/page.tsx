@@ -21,11 +21,11 @@ import {
 import { ArrowLeft, Star, Save, CheckCircle2, Clock, User, AlertCircle } from 'lucide-react';
 
 const REVIEW_STATUS_CONFIG = {
-  PENDING: { label: 'Pending', color: 'bg-gray-100 text-gray-700' },
-  SELF_REVIEW: { label: 'Self Review Submitted', color: 'bg-amber-100 text-amber-700' },
-  MANAGER_REVIEW: { label: 'Manager Review In Progress', color: 'bg-blue-100 text-blue-700' },
-  CALIBRATION: { label: 'Calibration', color: 'bg-purple-100 text-purple-700' },
-  COMPLETED: { label: 'Completed', color: 'bg-green-100 text-green-700' },
+  PENDING: { label: 'Pending', color: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300' },
+  SELF_REVIEW: { label: 'Self Review Submitted', color: 'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-400' },
+  MANAGER_REVIEW: { label: 'Manager Review In Progress', color: 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400' },
+  CALIBRATION: { label: 'Calibration', color: 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-400' },
+  COMPLETED: { label: 'Completed', color: 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400' },
 };
 
 export default function ReviewDetailPage() {
@@ -146,17 +146,17 @@ export default function ReviewDetailPage() {
             key={star}
             type="button"
             onClick={() => handleRatingChange(questionId, star)}
-            className="p-1 hover:scale-110 transition-transform"
+            className="p-1 hover:scale-110 transition-transform cursor-pointer"
           >
             <Star
               className={`h-6 w-6 ${
-                star <= currentRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300 hover:text-yellow-200'
+                star <= currentRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300 dark:text-gray-600 hover:text-yellow-200 dark:hover:text-yellow-300'
               }`}
             />
           </button>
         ))}
         {currentRating > 0 && (
-          <span className="ml-2 text-sm font-medium text-gray-600">{currentRating}/5</span>
+          <span className="ml-2 text-sm font-medium text-gray-600 dark:text-gray-400">{currentRating}/5</span>
         )}
       </div>
     );
@@ -164,14 +164,14 @@ export default function ReviewDetailPage() {
 
   const renderQuestion = (question: ReviewQuestion) => {
     return (
-      <div key={question.id} className="p-4 border rounded-lg">
+      <div key={question.id} className="p-4 border dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
         <div className="flex items-start gap-2 mb-3">
           <Badge variant="outline" className="text-xs">{question.category}</Badge>
-          {question.isRequired && <Badge className="bg-red-100 text-red-700 text-xs">Required</Badge>}
+          {question.isRequired && <Badge className="bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-400 text-xs">Required</Badge>}
         </div>
-        <p className="font-medium mb-3">{question.question}</p>
+        <p className="font-medium mb-3 text-gray-900 dark:text-gray-100">{question.question}</p>
         {question.description && (
-          <p className="text-sm text-gray-500 mb-3">{question.description}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{question.description}</p>
         )}
 
         {question.type === 'RATING' && renderRatingInput(question.id)}
@@ -215,7 +215,7 @@ export default function ReviewDetailPage() {
     return (
       <DashboardLayout title="Performance Review">
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
         </div>
       </DashboardLayout>
     );
@@ -225,8 +225,8 @@ export default function ReviewDetailPage() {
     return (
       <DashboardLayout title="Performance Review">
         <div className="text-center py-12">
-          <AlertCircle className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium">Review not found</h3>
+          <AlertCircle className="h-12 w-12 mx-auto text-gray-400 dark:text-gray-500 mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Review not found</h3>
         </div>
       </DashboardLayout>
     );
@@ -258,13 +258,13 @@ export default function ReviewDetailPage() {
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <h2 className="text-xl font-semibold">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                 {review.employee?.firstName} {review.employee?.lastName}
               </h2>
-              <p className="text-gray-500">
+              <p className="text-gray-500 dark:text-gray-400">
                 {review.employee?.designation?.name} | {review.employee?.department?.name}
               </p>
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-gray-400 dark:text-gray-500">
                 Reviewer: {review.reviewer?.firstName} {review.reviewer?.lastName}
               </p>
             </div>
@@ -272,37 +272,37 @@ export default function ReviewDetailPage() {
               <Badge className={REVIEW_STATUS_CONFIG[review.status].color}>
                 {REVIEW_STATUS_CONFIG[review.status].label}
               </Badge>
-              <p className="text-sm text-gray-500 mt-2">{review.cycle?.name}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{review.cycle?.name}</p>
             </div>
           </div>
 
           {/* Ratings Summary */}
           {(review.selfRating || review.managerRating || review.finalRating) && (
-            <div className="flex items-center gap-8 mt-4 pt-4 border-t">
+            <div className="flex flex-wrap items-center gap-8 mt-4 pt-4 border-t dark:border-gray-700">
               {review.selfRating && (
                 <div>
-                  <p className="text-sm text-gray-500">Self Rating</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Self Rating</p>
                   <div className="flex items-center gap-1">
                     <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
-                    <span className="font-semibold">{review.selfRating.toFixed(1)}</span>
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">{review.selfRating.toFixed(1)}</span>
                   </div>
                 </div>
               )}
               {review.managerRating && (
                 <div>
-                  <p className="text-sm text-gray-500">Manager Rating</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Manager Rating</p>
                   <div className="flex items-center gap-1">
                     <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
-                    <span className="font-semibold">{review.managerRating.toFixed(1)}</span>
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">{review.managerRating.toFixed(1)}</span>
                   </div>
                 </div>
               )}
               {review.finalRating && (
                 <div>
-                  <p className="text-sm text-gray-500">Final Rating</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Final Rating</p>
                   <div className="flex items-center gap-1">
                     <Star className="h-5 w-5 text-green-500 fill-green-500" />
-                    <span className="font-semibold text-green-600">{review.finalRating.toFixed(1)}</span>
+                    <span className="font-semibold text-green-600 dark:text-green-400">{review.finalRating.toFixed(1)}</span>
                   </div>
                 </div>
               )}
@@ -374,34 +374,34 @@ export default function ReviewDetailPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <h4 className="font-medium mb-2">Self Assessment</h4>
+                <h4 className="font-medium mb-2 text-gray-900 dark:text-gray-100">Self Assessment</h4>
                 {review.selfStrengths && (
                   <div className="mb-2">
-                    <p className="text-sm text-gray-500">Strengths:</p>
-                    <p className="text-sm">{review.selfStrengths}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Strengths:</p>
+                    <p className="text-sm text-gray-900 dark:text-gray-100">{review.selfStrengths}</p>
                   </div>
                 )}
                 {review.selfImprovements && (
                   <div className="mb-2">
-                    <p className="text-sm text-gray-500">Areas for Improvement:</p>
-                    <p className="text-sm">{review.selfImprovements}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Areas for Improvement:</p>
+                    <p className="text-sm text-gray-900 dark:text-gray-100">{review.selfImprovements}</p>
                   </div>
                 )}
               </div>
               <div>
-                <h4 className="font-medium mb-2">Manager Assessment</h4>
+                <h4 className="font-medium mb-2 text-gray-900 dark:text-gray-100">Manager Assessment</h4>
                 {review.managerStrengths && (
                   <div className="mb-2">
-                    <p className="text-sm text-gray-500">Strengths:</p>
-                    <p className="text-sm">{review.managerStrengths}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Strengths:</p>
+                    <p className="text-sm text-gray-900 dark:text-gray-100">{review.managerStrengths}</p>
                   </div>
                 )}
                 {review.managerImprovements && (
                   <div className="mb-2">
-                    <p className="text-sm text-gray-500">Areas for Improvement:</p>
-                    <p className="text-sm">{review.managerImprovements}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Areas for Improvement:</p>
+                    <p className="text-sm text-gray-900 dark:text-gray-100">{review.managerImprovements}</p>
                   </div>
                 )}
               </div>

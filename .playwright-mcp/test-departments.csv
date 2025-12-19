@@ -1,3 +1,0 @@
-code,name,parent_code,is_active
-SALES,Sales Department,,true
-MKT,Marketing,SALES,true

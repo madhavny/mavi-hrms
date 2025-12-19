@@ -302,7 +302,7 @@ export default function DesignationsPage() {
                         <th className="text-left py-3 px-4 font-medium dark:text-gray-200">
                           <button
                             onClick={() => toggleSort('name')}
-                            className="flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400"
+                            className="flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
                           >
                             Name
                             <ArrowUpDown className="h-3.5 w-3.5" />
@@ -312,7 +312,7 @@ export default function DesignationsPage() {
                         <th className="text-center py-3 px-4 font-medium dark:text-gray-200">
                           <button
                             onClick={() => toggleSort('level')}
-                            className="flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400 mx-auto"
+                            className="flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400 mx-auto cursor-pointer"
                           >
                             Level
                             <ArrowUpDown className="h-3.5 w-3.5" />
@@ -322,7 +322,7 @@ export default function DesignationsPage() {
                         <th className="text-center py-3 px-4 font-medium dark:text-gray-200">
                           <button
                             onClick={() => toggleSort('employees')}
-                            className="flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400 mx-auto"
+                            className="flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400 mx-auto cursor-pointer"
                           >
                             Employees
                             <ArrowUpDown className="h-3.5 w-3.5" />

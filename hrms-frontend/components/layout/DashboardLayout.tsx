@@ -8,6 +8,7 @@ import {
   Sidebar,
   SidebarContent,
   SidebarHeader,
+  SidebarFooter,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
@@ -30,6 +31,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Home, Users, Calendar, FileText, Settings, LogOut, Clock, Menu, History, ClipboardCheck, IndianRupee, Wallet, BarChart3, Bell, Check, CheckCheck, Trash2, X, TrendingUp, Target, Star, Timer, Receipt, Briefcase, GraduationCap, Lightbulb, Package, FolderOpen, Gift, Wrench, CalendarDays, Upload } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { CORE_MODULES, DEFAULT_ENABLED_MODULES } from '@/lib/modules';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9000';
 
@@ -45,7 +47,7 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
   const tenantSlug = params.tenant as string;
 
   const [user, setUser] = useState<TenantUser | null>(null);
-  const [tenantInfo, setTenantInfo] = useState<{ name: string; logo?: string } | null>(null);
+  const [tenantInfo, setTenantInfo] = useState<{ name: string; logo?: string; enabledModules?: string[] } | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -200,36 +202,50 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
   };
 
   const allMenuItems = [
-    { icon: Home, label: 'Dashboard', href: `/${tenantSlug}/dashboard` },
-    { icon: Users, label: 'Employees', href: `/${tenantSlug}/employees` },
-    { icon: Clock, label: 'Attendance', href: `/${tenantSlug}/attendance` },
-    { icon: FileText, label: 'Leave', href: `/${tenantSlug}/leave` },
-    { icon: ClipboardCheck, label: 'Leave Approvals', href: `/${tenantSlug}/leave-approvals`, roles: ['ADMIN', 'HR'] },
-    { icon: Wallet, label: 'Salary Structures', href: `/${tenantSlug}/payroll/salary-structures`, roles: ['ADMIN', 'HR'] },
-    { icon: IndianRupee, label: 'Payslips', href: `/${tenantSlug}/payroll/payslips`, roles: ['ADMIN', 'HR'] },
-    { icon: History, label: 'Audit Logs', href: `/${tenantSlug}/audit-logs`, roles: ['ADMIN', 'HR'] },
-    { icon: BarChart3, label: 'Reports', href: `/${tenantSlug}/reports`, roles: ['ADMIN', 'HR'] },
-    { icon: TrendingUp, label: 'Analytics', href: `/${tenantSlug}/analytics`, roles: ['ADMIN', 'HR'] },
-    { icon: Target, label: 'Goals', href: `/${tenantSlug}/goals`, roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'] },
-    { icon: Star, label: 'Reviews', href: `/${tenantSlug}/reviews`, roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'] },
-    { icon: Timer, label: 'Timesheet', href: `/${tenantSlug}/timesheet`, roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'] },
-    { icon: Receipt, label: 'Expenses', href: `/${tenantSlug}/expenses`, roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'] },
-    { icon: Briefcase, label: 'Recruitment', href: `/${tenantSlug}/recruitment`, roles: ['ADMIN', 'HR'] },
-    { icon: GraduationCap, label: 'Training', href: `/${tenantSlug}/training`, roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'] },
-    { icon: Lightbulb, label: 'Skills', href: `/${tenantSlug}/skills`, roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'] },
-    { icon: Package, label: 'Assets', href: `/${tenantSlug}/assets`, roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'] },
-    { icon: FolderOpen, label: 'Documents', href: `/${tenantSlug}/documents`, roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'] },
-    { icon: Gift, label: 'Bonuses', href: `/${tenantSlug}/bonuses`, roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'] },
-    { icon: Wrench, label: 'Report Builder', href: `/${tenantSlug}/report-builder`, roles: ['ADMIN', 'HR'] },
-    { icon: CalendarDays, label: 'Holidays', href: `/${tenantSlug}/settings/holidays`, roles: ['ADMIN', 'HR'] },
-    { icon: Upload, label: 'Data Import', href: `/${tenantSlug}/settings/data-import`, roles: ['ADMIN'] },
-    { icon: Settings, label: 'Settings', href: `/${tenantSlug}/settings` },
+    { icon: Home, label: 'Dashboard', href: `/${tenantSlug}/dashboard`, moduleId: 'dashboard' },
+    { icon: Users, label: 'Employees', href: `/${tenantSlug}/employees`, moduleId: 'employees' },
+    { icon: Clock, label: 'Attendance', href: `/${tenantSlug}/attendance`, moduleId: 'attendance' },
+    { icon: FileText, label: 'Leave', href: `/${tenantSlug}/leave`, moduleId: 'leave' },
+    { icon: ClipboardCheck, label: 'Leave Approvals', href: `/${tenantSlug}/leave-approvals`, roles: ['ADMIN', 'HR'], moduleId: 'leave-approvals' },
+    { icon: Wallet, label: 'Salary Structures', href: `/${tenantSlug}/payroll/salary-structures`, roles: ['ADMIN', 'HR'], moduleId: 'payroll' },
+    { icon: IndianRupee, label: 'Payslips', href: `/${tenantSlug}/payroll/payslips`, roles: ['ADMIN', 'HR'], moduleId: 'payroll' },
+    { icon: History, label: 'Audit Logs', href: `/${tenantSlug}/audit-logs`, roles: ['ADMIN', 'HR'], moduleId: 'audit-logs' },
+    { icon: BarChart3, label: 'Reports', href: `/${tenantSlug}/reports`, roles: ['ADMIN', 'HR'], moduleId: 'reports' },
+    { icon: TrendingUp, label: 'Analytics', href: `/${tenantSlug}/analytics`, roles: ['ADMIN', 'HR'], moduleId: 'analytics' },
+    { icon: Target, label: 'Goals', href: `/${tenantSlug}/goals`, roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'], moduleId: 'goals' },
+    { icon: Star, label: 'Reviews', href: `/${tenantSlug}/reviews`, roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'], moduleId: 'reviews' },
+    { icon: Timer, label: 'Timesheet', href: `/${tenantSlug}/timesheet`, roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'], moduleId: 'timesheet' },
+    { icon: Receipt, label: 'Expenses', href: `/${tenantSlug}/expenses`, roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'], moduleId: 'expenses' },
+    { icon: Briefcase, label: 'Recruitment', href: `/${tenantSlug}/recruitment`, roles: ['ADMIN', 'HR'], moduleId: 'recruitment' },
+    { icon: GraduationCap, label: 'Training', href: `/${tenantSlug}/training`, roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'], moduleId: 'training' },
+    { icon: Lightbulb, label: 'Skills', href: `/${tenantSlug}/skills`, roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'], moduleId: 'skills' },
+    { icon: Package, label: 'Assets', href: `/${tenantSlug}/assets`, roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'], moduleId: 'assets' },
+    { icon: FolderOpen, label: 'Documents', href: `/${tenantSlug}/documents`, roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'], moduleId: 'documents' },
+    { icon: Gift, label: 'Bonuses', href: `/${tenantSlug}/bonuses`, roles: ['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'], moduleId: 'bonuses' },
+    { icon: Wrench, label: 'Report Builder', href: `/${tenantSlug}/report-builder`, roles: ['ADMIN', 'HR'], moduleId: 'report-builder' },
+    { icon: CalendarDays, label: 'Holidays', href: `/${tenantSlug}/settings/holidays`, roles: ['ADMIN', 'HR'], moduleId: 'holidays' },
+    { icon: Upload, label: 'Data Import', href: `/${tenantSlug}/settings/data-import`, roles: ['ADMIN'], moduleId: 'settings' },
+    { icon: Settings, label: 'Settings', href: `/${tenantSlug}/settings`, moduleId: 'settings' },
   ];
 
-  // Filter menu items based on user role
+  // Get enabled modules from tenant info (default to all if not set)
+  const enabledModules = tenantInfo?.enabledModules?.length
+    ? tenantInfo.enabledModules
+    : DEFAULT_ENABLED_MODULES;
+
+  // Filter menu items based on user role AND enabled modules
   const menuItems = allMenuItems.filter(item => {
-    if (!item.roles) return true; // Show to all if no roles specified
-    return user?.role?.code && item.roles.includes(user.role.code);
+    // Check if module is enabled for this tenant
+    if (item.moduleId && !enabledModules.includes(item.moduleId)) {
+      return false;
+    }
+
+    // Check role permissions
+    if (item.roles && (!user?.role?.code || !item.roles.includes(user.role.code))) {
+      return false;
+    }
+
+    return true;
   });
 
   const MobileNav = () => (
@@ -273,7 +289,7 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
           <SidebarHeader className="p-4 border-b">
             <h2 className="font-bold text-lg">{tenantInfo?.name || 'HRMS'}</h2>
           </SidebarHeader>
-          <SidebarContent>
+          <SidebarContent className="flex-1 overflow-y-auto">
             <SidebarMenu>
               {menuItems.map((item) => {
                 const isActive = pathname === item.href;
@@ -288,14 +304,18 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
                   </SidebarMenuItem>
                 );
               })}
+            </SidebarMenu>
+          </SidebarContent>
+          <SidebarFooter className="border-t p-2">
+            <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton onClick={handleLogout}>
+                <SidebarMenuButton onClick={handleLogout} className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
                   <LogOut className="h-4 w-4" />
                   <span>Logout</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
-          </SidebarContent>
+          </SidebarFooter>
         </Sidebar>
 
         <SidebarInset className="flex-1">

@@ -619,7 +619,7 @@ export default function RolesPage() {
 
       {/* Permissions Modal */}
       <Dialog open={isPermissionsModalOpen} onOpenChange={setIsPermissionsModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
               Manage Permissions - {editingRole?.name}

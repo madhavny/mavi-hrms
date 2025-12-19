@@ -78,7 +78,7 @@ export default function ExpensesPage() {
   const [user, setUser] = useState<{ id: number; role?: { code: string } } | null>(null);
 
   // Filters
-  const [filterStatus, setFilterStatus] = useState<ExpenseStatus | ''>('');
+  const [filterStatus, setFilterStatus] = useState<ExpenseStatus | 'all'>('all');
 
   // Claim Modal
   const [showClaimModal, setShowClaimModal] = useState(false);
@@ -355,7 +355,7 @@ export default function ExpensesPage() {
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Status</SelectItem>
+                <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="DRAFT">Draft</SelectItem>
                 <SelectItem value="PENDING">Pending</SelectItem>
                 <SelectItem value="APPROVED">Approved</SelectItem>

@@ -144,7 +144,8 @@ export default function AssetsPage() {
   const fetchLocations = useCallback(async () => {
     try {
       const res = await tenantApi.getLocations();
-      setLocations(res.data || []);
+      const locData = Array.isArray(res.data) ? res.data : (res.data?.locations || []);
+      setLocations(locData);
     } catch (err) {
       console.error('Failed to fetch locations:', err);
     }
@@ -620,7 +621,7 @@ export default function AssetsPage() {
 
       {/* Asset Modal */}
       <Dialog open={showAssetModal} onOpenChange={setShowAssetModal}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>{selectedAsset ? 'Edit Asset' : 'Add Asset'}</DialogTitle>
             <DialogDescription>Enter asset details</DialogDescription>
@@ -682,12 +683,12 @@ export default function AssetsPage() {
             </div>
             <div>
               <Label>Location</Label>
-              <Select value={assetForm.locationId} onValueChange={(v) => setAssetForm({ ...assetForm, locationId: v })}>
+              <Select value={assetForm.locationId || '__none__'} onValueChange={(v) => setAssetForm({ ...assetForm, locationId: v === '__none__' ? '' : v })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select location" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="__none__">None</SelectItem>
                   {locations.map((loc) => (
                     <SelectItem key={loc.id} value={String(loc.id)}>
                       {loc.name}

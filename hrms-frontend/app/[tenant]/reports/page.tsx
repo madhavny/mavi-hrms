@@ -268,26 +268,26 @@ export default function ReportsPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold">{headcountData.summary.totalEmployees}</div>
-              <p className="text-sm text-gray-500">Total Employees</p>
+              <div className="text-2xl font-bold dark:text-white">{headcountData.summary.totalEmployees}</div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Total Employees</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-green-600">{headcountData.summary.activeEmployees}</div>
-              <p className="text-sm text-gray-500">Active</p>
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{headcountData.summary.activeEmployees}</div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Active</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-red-600">{headcountData.summary.inactiveEmployees}</div>
-              <p className="text-sm text-gray-500">Inactive</p>
+              <div className="text-2xl font-bold text-red-600 dark:text-red-400">{headcountData.summary.inactiveEmployees}</div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Inactive</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-blue-600">{headcountData.breakdown.length}</div>
-              <p className="text-sm text-gray-500 capitalize">{headcountGroupBy}s</p>
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{headcountData.breakdown.length}</div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">{headcountGroupBy}s</p>
             </CardContent>
           </Card>
         </div>
@@ -359,20 +359,20 @@ export default function ReportsPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-medium">Name</th>
-                    <th className="text-left py-3 px-4 font-medium">Code</th>
-                    <th className="text-right py-3 px-4 font-medium">Total</th>
-                    <th className="text-right py-3 px-4 font-medium">Active</th>
+                  <tr className="border-b dark:border-gray-700">
+                    <th className="text-left py-3 px-4 font-medium dark:text-gray-200">Name</th>
+                    <th className="text-left py-3 px-4 font-medium dark:text-gray-200">Code</th>
+                    <th className="text-right py-3 px-4 font-medium dark:text-gray-200">Total</th>
+                    <th className="text-right py-3 px-4 font-medium dark:text-gray-200">Active</th>
                   </tr>
                 </thead>
                 <tbody>
                   {headcountData.breakdown.map((item, index) => (
-                    <tr key={index} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800">
-                      <td className="py-3 px-4">{item.name}</td>
-                      <td className="py-3 px-4 text-gray-500">{item.code}</td>
-                      <td className="py-3 px-4 text-right font-medium">{item.count}</td>
-                      <td className="py-3 px-4 text-right text-green-600">{item.activeCount}</td>
+                    <tr key={index} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
+                      <td className="py-3 px-4 dark:text-white">{item.name}</td>
+                      <td className="py-3 px-4 text-gray-500 dark:text-gray-400">{item.code}</td>
+                      <td className="py-3 px-4 text-right font-medium dark:text-white">{item.count}</td>
+                      <td className="py-3 px-4 text-right text-green-600 dark:text-green-400">{item.activeCount}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -445,30 +445,30 @@ export default function ReportsPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-4 font-medium">Employee</th>
-                      <th className="text-left py-3 px-4 font-medium">Department</th>
-                      <th className="text-right py-3 px-4 font-medium">Present</th>
-                      <th className="text-right py-3 px-4 font-medium">Absent</th>
-                      <th className="text-right py-3 px-4 font-medium">Late</th>
-                      <th className="text-right py-3 px-4 font-medium">Attendance %</th>
+                    <tr className="border-b dark:border-gray-700">
+                      <th className="text-left py-3 px-4 font-medium dark:text-gray-200">Employee</th>
+                      <th className="text-left py-3 px-4 font-medium dark:text-gray-200">Department</th>
+                      <th className="text-right py-3 px-4 font-medium dark:text-gray-200">Present</th>
+                      <th className="text-right py-3 px-4 font-medium dark:text-gray-200">Absent</th>
+                      <th className="text-right py-3 px-4 font-medium dark:text-gray-200">Late</th>
+                      <th className="text-right py-3 px-4 font-medium dark:text-gray-200">Attendance %</th>
                     </tr>
                   </thead>
                   <tbody>
                     {attendanceData.employees.map((item, index) => (
-                      <tr key={index} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800">
+                      <tr key={index} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
                         <td className="py-3 px-4">
-                          <div className="font-medium">{item.employee.name}</div>
-                          <div className="text-xs text-gray-500">{item.employee.employeeCode}</div>
+                          <div className="font-medium dark:text-white">{item.employee.name}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">{item.employee.employeeCode}</div>
                         </td>
-                        <td className="py-3 px-4 text-gray-500">{item.employee.department}</td>
-                        <td className="py-3 px-4 text-right text-green-600">{item.presentDays}</td>
-                        <td className="py-3 px-4 text-right text-red-600">{item.absentDays}</td>
-                        <td className="py-3 px-4 text-right text-amber-600">{item.lateDays}</td>
+                        <td className="py-3 px-4 text-gray-500 dark:text-gray-400">{item.employee.department}</td>
+                        <td className="py-3 px-4 text-right text-green-600 dark:text-green-400">{item.presentDays}</td>
+                        <td className="py-3 px-4 text-right text-red-600 dark:text-red-400">{item.absentDays}</td>
+                        <td className="py-3 px-4 text-right text-amber-600 dark:text-amber-400">{item.lateDays}</td>
                         <td className="py-3 px-4 text-right">
                           <span className={`font-medium ${
-                            item.attendancePercentage >= 90 ? 'text-green-600' :
-                            item.attendancePercentage >= 75 ? 'text-amber-600' : 'text-red-600'
+                            item.attendancePercentage >= 90 ? 'text-green-600 dark:text-green-400' :
+                            item.attendancePercentage >= 75 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'
                           }`}>
                             {item.attendancePercentage}%
                           </span>
@@ -525,24 +525,24 @@ export default function ReportsPage() {
               <div className="overflow-x-auto max-h-96">
                 <table className="w-full text-sm">
                   <thead className="sticky top-0 bg-white dark:bg-gray-900">
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-4 font-medium">Date</th>
-                      <th className="text-left py-3 px-4 font-medium">Day</th>
-                      <th className="text-right py-3 px-4 font-medium">Present</th>
-                      <th className="text-right py-3 px-4 font-medium">Absent</th>
-                      <th className="text-right py-3 px-4 font-medium">On Leave</th>
-                      <th className="text-right py-3 px-4 font-medium">Rate</th>
+                    <tr className="border-b dark:border-gray-700">
+                      <th className="text-left py-3 px-4 font-medium dark:text-gray-200">Date</th>
+                      <th className="text-left py-3 px-4 font-medium dark:text-gray-200">Day</th>
+                      <th className="text-right py-3 px-4 font-medium dark:text-gray-200">Present</th>
+                      <th className="text-right py-3 px-4 font-medium dark:text-gray-200">Absent</th>
+                      <th className="text-right py-3 px-4 font-medium dark:text-gray-200">On Leave</th>
+                      <th className="text-right py-3 px-4 font-medium dark:text-gray-200">Rate</th>
                     </tr>
                   </thead>
                   <tbody>
                     {attendanceData.dailyData.map((item, index) => (
-                      <tr key={index} className={`border-b ${item.isWeekend ? 'bg-gray-50 text-gray-400' : 'hover:bg-gray-50'}`}>
-                        <td className="py-3 px-4">{new Date(item.date).toLocaleDateString()}</td>
-                        <td className="py-3 px-4">{item.dayOfWeek}</td>
-                        <td className="py-3 px-4 text-right">{item.present}</td>
-                        <td className="py-3 px-4 text-right">{item.absent}</td>
-                        <td className="py-3 px-4 text-right">{item.onLeave}</td>
-                        <td className="py-3 px-4 text-right">{item.attendanceRate}%</td>
+                      <tr key={index} className={`border-b dark:border-gray-700 ${item.isWeekend ? 'bg-gray-50 dark:bg-gray-800 text-gray-400' : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                        <td className="py-3 px-4 dark:text-gray-200">{new Date(item.date).toLocaleDateString()}</td>
+                        <td className="py-3 px-4 dark:text-gray-200">{item.dayOfWeek}</td>
+                        <td className="py-3 px-4 text-right dark:text-gray-200">{item.present}</td>
+                        <td className="py-3 px-4 text-right dark:text-gray-200">{item.absent}</td>
+                        <td className="py-3 px-4 text-right dark:text-gray-200">{item.onLeave}</td>
+                        <td className="py-3 px-4 text-right dark:text-gray-200">{item.attendanceRate}%</td>
                       </tr>
                     ))}
                   </tbody>
@@ -580,7 +580,7 @@ export default function ReportsPage() {
       );
     }
 
-    return <p className="text-gray-500">No data available</p>;
+    return <p className="text-gray-500 dark:text-gray-400">No data available</p>;
   };
 
   const renderLeaveReport = () => {
@@ -600,32 +600,32 @@ export default function ReportsPage() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold">{leaveData.summary.totalRequests}</div>
-              <p className="text-sm text-gray-500">Total Requests</p>
+              <div className="text-2xl font-bold dark:text-white">{leaveData.summary.totalRequests}</div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Total Requests</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-blue-600">{leaveData.summary.totalDays}</div>
-              <p className="text-sm text-gray-500">Total Days</p>
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{leaveData.summary.totalDays}</div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Total Days</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-green-600">{leaveData.summary.approved}</div>
-              <p className="text-sm text-gray-500">Approved</p>
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{leaveData.summary.approved}</div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Approved</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-amber-600">{leaveData.summary.pending}</div>
-              <p className="text-sm text-gray-500">Pending</p>
+              <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{leaveData.summary.pending}</div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Pending</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-red-600">{leaveData.summary.rejected}</div>
-              <p className="text-sm text-gray-500">Rejected</p>
+              <div className="text-2xl font-bold text-red-600 dark:text-red-400">{leaveData.summary.rejected}</div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Rejected</p>
             </CardContent>
           </Card>
         </div>
@@ -716,26 +716,26 @@ export default function ReportsPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-medium capitalize">{leaveGroupBy}</th>
-                    <th className="text-right py-3 px-4 font-medium">Requests</th>
-                    <th className="text-right py-3 px-4 font-medium">Days</th>
-                    <th className="text-right py-3 px-4 font-medium">Approved</th>
-                    <th className="text-right py-3 px-4 font-medium">Pending</th>
-                    <th className="text-right py-3 px-4 font-medium">Rejected</th>
+                  <tr className="border-b dark:border-gray-700">
+                    <th className="text-left py-3 px-4 font-medium dark:text-gray-200 capitalize">{leaveGroupBy}</th>
+                    <th className="text-right py-3 px-4 font-medium dark:text-gray-200">Requests</th>
+                    <th className="text-right py-3 px-4 font-medium dark:text-gray-200">Days</th>
+                    <th className="text-right py-3 px-4 font-medium dark:text-gray-200">Approved</th>
+                    <th className="text-right py-3 px-4 font-medium dark:text-gray-200">Pending</th>
+                    <th className="text-right py-3 px-4 font-medium dark:text-gray-200">Rejected</th>
                   </tr>
                 </thead>
                 <tbody>
                   {leaveData.breakdown.map((item, index) => (
-                    <tr key={index} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800">
-                      <td className="py-3 px-4">
+                    <tr key={index} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
+                      <td className="py-3 px-4 dark:text-white">
                         {item.employee?.name || item.leaveType?.name || item.department?.name || item.monthName}
                       </td>
-                      <td className="py-3 px-4 text-right">{item.totalRequests}</td>
-                      <td className="py-3 px-4 text-right font-medium">{item.totalDays}</td>
-                      <td className="py-3 px-4 text-right text-green-600">{item.approved}</td>
-                      <td className="py-3 px-4 text-right text-amber-600">{item.pending}</td>
-                      <td className="py-3 px-4 text-right text-red-600">{item.rejected}</td>
+                      <td className="py-3 px-4 text-right dark:text-gray-200">{item.totalRequests}</td>
+                      <td className="py-3 px-4 text-right font-medium dark:text-white">{item.totalDays}</td>
+                      <td className="py-3 px-4 text-right text-green-600 dark:text-green-400">{item.approved}</td>
+                      <td className="py-3 px-4 text-right text-amber-600 dark:text-amber-400">{item.pending}</td>
+                      <td className="py-3 px-4 text-right text-red-600 dark:text-red-400">{item.rejected}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -756,26 +756,26 @@ export default function ReportsPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold">{payrollData.summary.totalPayslips}</div>
-              <p className="text-sm text-gray-500">Total Payslips</p>
+              <div className="text-2xl font-bold dark:text-white">{payrollData.summary.totalPayslips}</div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Total Payslips</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-green-600">{formatCurrency(payrollData.summary.totalGrossSalary)}</div>
-              <p className="text-sm text-gray-500">Total Gross</p>
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrency(payrollData.summary.totalGrossSalary)}</div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Total Gross</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-red-600">{formatCurrency(payrollData.summary.totalDeductions)}</div>
-              <p className="text-sm text-gray-500">Total Deductions</p>
+              <div className="text-2xl font-bold text-red-600 dark:text-red-400">{formatCurrency(payrollData.summary.totalDeductions)}</div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Total Deductions</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-blue-600">{formatCurrency(payrollData.summary.totalNetSalary)}</div>
-              <p className="text-sm text-gray-500">Total Net Salary</p>
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formatCurrency(payrollData.summary.totalNetSalary)}</div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Total Net Salary</p>
             </CardContent>
           </Card>
         </div>
@@ -830,31 +830,31 @@ export default function ReportsPage() {
                   <div className="overflow-x-auto max-h-96">
                     <table className="w-full text-sm">
                       <thead className="sticky top-0 bg-white dark:bg-gray-900">
-                        <tr className="border-b">
-                          <th className="text-left py-3 px-4 font-medium">Employee</th>
-                          <th className="text-left py-3 px-4 font-medium">Department</th>
-                          <th className="text-right py-3 px-4 font-medium">Gross</th>
-                          <th className="text-right py-3 px-4 font-medium">Deductions</th>
-                          <th className="text-right py-3 px-4 font-medium">Net Salary</th>
-                          <th className="text-center py-3 px-4 font-medium">Status</th>
+                        <tr className="border-b dark:border-gray-700">
+                          <th className="text-left py-3 px-4 font-medium dark:text-gray-200">Employee</th>
+                          <th className="text-left py-3 px-4 font-medium dark:text-gray-200">Department</th>
+                          <th className="text-right py-3 px-4 font-medium dark:text-gray-200">Gross</th>
+                          <th className="text-right py-3 px-4 font-medium dark:text-gray-200">Deductions</th>
+                          <th className="text-right py-3 px-4 font-medium dark:text-gray-200">Net Salary</th>
+                          <th className="text-center py-3 px-4 font-medium dark:text-gray-200">Status</th>
                         </tr>
                       </thead>
                       <tbody>
                         {payrollData.payslips.map((payslip) => (
-                          <tr key={payslip.id} className="border-b hover:bg-gray-50">
+                          <tr key={payslip.id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
                             <td className="py-3 px-4">
-                              <div className="font-medium">{payslip.employee.name}</div>
-                              <div className="text-xs text-gray-500">{payslip.employee.employeeCode}</div>
+                              <div className="font-medium dark:text-white">{payslip.employee.name}</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">{payslip.employee.employeeCode}</div>
                             </td>
-                            <td className="py-3 px-4 text-gray-500">{payslip.employee.department}</td>
-                            <td className="py-3 px-4 text-right">{formatCurrency(payslip.grossSalary)}</td>
-                            <td className="py-3 px-4 text-right text-red-600">{formatCurrency(payslip.totalDeductions)}</td>
-                            <td className="py-3 px-4 text-right font-medium">{formatCurrency(payslip.netSalary)}</td>
+                            <td className="py-3 px-4 text-gray-500 dark:text-gray-400">{payslip.employee.department}</td>
+                            <td className="py-3 px-4 text-right dark:text-gray-200">{formatCurrency(payslip.grossSalary)}</td>
+                            <td className="py-3 px-4 text-right text-red-600 dark:text-red-400">{formatCurrency(payslip.totalDeductions)}</td>
+                            <td className="py-3 px-4 text-right font-medium dark:text-white">{formatCurrency(payslip.netSalary)}</td>
                             <td className="py-3 px-4 text-center">
                               <span className={`px-2 py-1 rounded text-xs ${
-                                payslip.status === 'PAID' ? 'bg-green-100 text-green-800' :
-                                payslip.status === 'PROCESSED' ? 'bg-blue-100 text-blue-800' :
-                                'bg-gray-100 text-gray-800'
+                                payslip.status === 'PAID' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' :
+                                payslip.status === 'PROCESSED' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400' :
+                                'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
                               }`}>
                                 {payslip.status}
                               </span>
@@ -964,26 +964,26 @@ export default function ReportsPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold">{turnoverData.summary.currentHeadcount}</div>
-              <p className="text-sm text-gray-500">Current Headcount</p>
+              <div className="text-2xl font-bold dark:text-white">{turnoverData.summary.currentHeadcount}</div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Current Headcount</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-green-600">+{turnoverData.summary.totalJoins}</div>
-              <p className="text-sm text-gray-500">New Joins</p>
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">+{turnoverData.summary.totalJoins}</div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">New Joins</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-red-600">-{turnoverData.summary.totalExits}</div>
-              <p className="text-sm text-gray-500">Exits</p>
+              <div className="text-2xl font-bold text-red-600 dark:text-red-400">-{turnoverData.summary.totalExits}</div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Exits</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-blue-600">{turnoverData.summary.retentionRate}</div>
-              <p className="text-sm text-gray-500">Retention Rate</p>
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{turnoverData.summary.retentionRate}</div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Retention Rate</p>
             </CardContent>
           </Card>
         </div>
@@ -991,22 +991,22 @@ export default function ReportsPage() {
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold">{turnoverData.summary.turnoverRate}</div>
-              <p className="text-sm text-gray-500">Turnover Rate</p>
+              <div className="text-2xl font-bold dark:text-white">{turnoverData.summary.turnoverRate}</div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Turnover Rate</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold">{turnoverData.summary.avgTenureYears} yrs</div>
-              <p className="text-sm text-gray-500">Avg Tenure</p>
+              <div className="text-2xl font-bold dark:text-white">{turnoverData.summary.avgTenureYears} yrs</div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Avg Tenure</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <div className={`text-2xl font-bold ${turnoverData.summary.netChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <div className={`text-2xl font-bold ${turnoverData.summary.netChange >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                 {turnoverData.summary.netChange >= 0 ? '+' : ''}{turnoverData.summary.netChange}
               </div>
-              <p className="text-sm text-gray-500">Net Change</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Net Change</p>
             </CardContent>
           </Card>
         </div>
@@ -1081,15 +1081,15 @@ export default function ReportsPage() {
             <CardContent>
               <div className="space-y-3">
                 {turnoverData.recentJoins.length === 0 ? (
-                  <p className="text-gray-500 text-sm">No recent joins</p>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">No recent joins</p>
                 ) : (
                   turnoverData.recentJoins.map((emp) => (
-                    <div key={emp.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                    <div key={emp.id} className="flex items-center justify-between py-2 border-b dark:border-gray-700 last:border-0">
                       <div>
-                        <p className="font-medium">{emp.name}</p>
-                        <p className="text-sm text-gray-500">{emp.department}</p>
+                        <p className="font-medium dark:text-white">{emp.name}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{emp.department}</p>
                       </div>
-                      <span className="text-sm text-gray-500">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
                         {new Date(emp.joiningDate).toLocaleDateString()}
                       </span>
                     </div>
@@ -1106,15 +1106,15 @@ export default function ReportsPage() {
             <CardContent>
               <div className="space-y-3">
                 {turnoverData.recentExits.length === 0 ? (
-                  <p className="text-gray-500 text-sm">No recent exits</p>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">No recent exits</p>
                 ) : (
                   turnoverData.recentExits.map((emp) => (
-                    <div key={emp.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                    <div key={emp.id} className="flex items-center justify-between py-2 border-b dark:border-gray-700 last:border-0">
                       <div>
-                        <p className="font-medium">{emp.name}</p>
-                        <p className="text-sm text-gray-500">{emp.department}</p>
+                        <p className="font-medium dark:text-white">{emp.name}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{emp.department}</p>
                       </div>
-                      <span className="text-sm text-gray-500">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
                         {new Date(emp.exitDate).toLocaleDateString()}
                       </span>
                     </div>
@@ -1345,8 +1345,8 @@ export default function ReportsPage() {
                     <report.icon className={`h-5 w-5 ${report.color}`} />
                   </div>
                   <div>
-                    <p className="font-medium">{report.name}</p>
-                    <p className="text-xs text-gray-500">{report.description}</p>
+                    <p className="font-medium dark:text-white">{report.name}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{report.description}</p>
                   </div>
                 </div>
               </CardContent>
